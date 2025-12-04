@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.notelyapp" "\0"
-            VALUE "FileDescription", "notely_app" "\0"
+            VALUE "CompanyName", "com.pebblenote" "\0"
+            VALUE "FileDescription", "PebbleNote" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "notely_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.notelyapp. All rights reserved." "\0"
-            VALUE "OriginalFilename", "notely_app.exe" "\0"
-            VALUE "ProductName", "notely_app" "\0"
+            VALUE "InternalName", "PebbleNote" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.pebblenote. All rights reserved." "\0"
+            VALUE "OriginalFilename", "PebbleNote.exe" "\0"
+            VALUE "ProductName", "PebbleNote" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
