@@ -1,3 +1,42 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+pubspec.lock
+
+# Build outputs
+build/
+**/GeneratedPluginRegistrant.*
+
+# Android
+android/.gradle/
+android/app/release/
+android/app/debug/
+android/local.properties
+
+# iOS/macOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/.symlinks/
+macos/Pods/
+
+# Web
+web/.dart_tool/
+
+# Windows/Linux
+windows/runner/Debug/
+windows/runner/Release/
+linux/runner/Debug/
+linux/runner/Release/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+*.tmp
+*.swp
 # Miscellaneous
 *.class
 *.log
