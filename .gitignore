@@ -36,11 +36,7 @@ linux/runner/Release/
 # Misc
 *.log
 *.tmp
-*.swp
-# Miscellaneous
-*.class
-*.log
-*.pyc
+*.iml
 *.swp
 .DS_Store
 .atom/
