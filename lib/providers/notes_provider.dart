@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/note.dart';
 import '../utils/constants.dart';
+import '../services/notification_service.dart';
 
 class NotesProvider extends ChangeNotifier {
   final Box<Note> _notesBox = Hive.box<Note>(AppConstants.notesBox);
@@ -13,6 +14,10 @@ class NotesProvider extends ChangeNotifier {
   List<Note> _filteredNotes = [];
   String _searchQuery = '';
   Timer? _searchDebouncer;
+  bool _showPinnedOnly = false;
+  bool _showArchived = false;
+  bool _showScreenshotsOnly = false;
+  String? _selectedCategory; // null means all categories
 
   NotesProvider() {
     _loadNotes();
@@ -27,6 +32,10 @@ class NotesProvider extends ChangeNotifier {
       _notes.where((note) => note.isArchived).toList();
   String get searchQuery => _searchQuery;
   int get notesCount => _notes.where((note) => !note.isArchived).length;
+  bool get showPinnedOnly => _showPinnedOnly;
+  bool get showArchived => _showArchived;
+  bool get showScreenshotsOnly => _showScreenshotsOnly;
+  String? get selectedCategory => _selectedCategory;
 
   void _loadNotes() {
     _notes = _notesBox.values.toList();
@@ -52,17 +61,36 @@ class NotesProvider extends ChangeNotifier {
   }
 
   void _applyFilters() {
-    if (_searchQuery.isEmpty) {
-      _filteredNotes = _notes.where((note) => !note.isArchived).toList();
+    Iterable<Note> source = _notes;
+    // Archived view toggle: if true, show only archived; else exclude archived
+    if (_showArchived) {
+      source = source.where((n) => n.isArchived);
     } else {
-      _filteredNotes = _notes.where((note) {
-        return !note.isArchived &&
-            (note.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                note.content.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    ));
-      }).toList();
+      source = source.where((n) => !n.isArchived);
     }
+    // Pinned-only toggle
+    if (_showPinnedOnly) {
+      source = source.where((n) => n.isPinned);
+    }
+    // Screenshots-only (by category name)
+    if (_showScreenshotsOnly) {
+      source = source.where(
+        (n) => (n.category).toLowerCase() == 'screenshots',
+      );
+    }
+    // Specific category filter (overrides screenshots-only if set)
+    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      final cat = _selectedCategory!.toLowerCase();
+      source = source.where((n) => n.category.toLowerCase() == cat);
+    }
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      source = source.where((n) =>
+          n.title.toLowerCase().contains(q) ||
+          n.content.toLowerCase().contains(q));
+    }
+    _filteredNotes = source.toList();
   }
 
   Future<Note> createNote({
@@ -70,6 +98,7 @@ class NotesProvider extends ChangeNotifier {
     String content = '',
     NoteColor color = NoteColor.yellow,
     String category = 'Personal',
+    DateTime? reminderTime,
   }) async {
     final now = DateTime.now();
     final note = Note(
@@ -80,14 +109,26 @@ class NotesProvider extends ChangeNotifier {
       createdAt: now,
       updatedAt: now,
       category: category,
+      reminderTime: reminderTime,
     );
 
     debugPrint(
         '💾 NotesProvider: Creating note - ID: ${note.id}, Category: ${note.category}, Title: "${note.title}"');
     debugPrint(
         '💾 NotesProvider: Category passed: "$category", Note category: "${note.category}"');
-    await _notesBox.put(note.id, note);
+    try {
+      await _notesBox.put(note.id, note);
+    } catch (e, st) {
+      debugPrint('❌ NotesProvider: Failed to write new note: $e');
+      debugPrint('❌ NotesProvider: Stack: $st');
+      rethrow;
+    }
     _loadNotes();
+    // Schedule reminder if set in the future
+    if (note.reminderTime != null &&
+        note.reminderTime!.isAfter(DateTime.now())) {
+      await NotificationService.scheduleReminder(note);
+    }
     debugPrint(
         '✅ NotesProvider: Note created and stored successfully with category: ${note.category}');
     return note;
@@ -97,13 +138,36 @@ class NotesProvider extends ChangeNotifier {
     final updatedNote = note.copyWith(updatedAt: DateTime.now());
     debugPrint(
         '💾 NotesProvider: Updating note - ID: ${note.id}, Category: ${updatedNote.category}, Title: "${updatedNote.title}"');
-    await _notesBox.put(note.id, updatedNote);
+    try {
+      await _notesBox.put(note.id, updatedNote);
+    } catch (e, st) {
+      debugPrint('❌ NotesProvider: Failed to update note ${note.id}: $e');
+      debugPrint('❌ NotesProvider: Stack: $st');
+      rethrow;
+    }
     _loadNotes();
+    if (updatedNote.reminderTime != null &&
+        updatedNote.reminderTime!.isAfter(DateTime.now())) {
+      await NotificationService.scheduleReminder(updatedNote);
+    } else {
+      // Reminder cleared or in the past: cancel any existing scheduled notification
+      await NotificationService.cancelReminderByNoteId(updatedNote.id);
+    }
     debugPrint('✅ NotesProvider: Note updated successfully');
   }
 
   Future<void> deleteNote(String noteId) async {
-    await _notesBox.delete(noteId);
+    // Cancel any scheduled reminder for this note before deleting
+    try {
+      await NotificationService.cancelReminderByNoteId(noteId);
+    } catch (_) {}
+    try {
+      await _notesBox.delete(noteId);
+    } catch (e, st) {
+      debugPrint('❌ NotesProvider: Failed to delete note $noteId: $e');
+      debugPrint('❌ NotesProvider: Stack: $st');
+      rethrow;
+    }
     _loadNotes();
   }
 
@@ -145,6 +209,43 @@ class NotesProvider extends ChangeNotifier {
   void clearSearch() {
     _searchQuery = '';
     _searchDebouncer?.cancel();
+    _applyFilters();
+    notifyListeners();
+  }
+
+  void setShowPinnedOnly(bool value) {
+    _showPinnedOnly = value;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  void setShowArchived(bool value) {
+    _showArchived = value;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  void setShowScreenshotsOnly(bool value) {
+    _showScreenshotsOnly = value;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  void setSelectedCategory(String? category) {
+    _selectedCategory = category;
+    // If a specific category is chosen, disable screenshots-only
+    if (category != null && category.isNotEmpty) {
+      _showScreenshotsOnly = false;
+    }
+    _applyFilters();
+    notifyListeners();
+  }
+
+  void clearAllFilters() {
+    _showPinnedOnly = false;
+    _showArchived = false;
+    _showScreenshotsOnly = false;
+    _selectedCategory = null;
     _applyFilters();
     notifyListeners();
   }

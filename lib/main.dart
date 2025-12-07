@@ -17,6 +17,8 @@ import 'screens/home_screen.dart';
 import 'screens/note_editor_screen.dart';
 import 'screens/checklist_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/calendar_screen.dart';
+import 'services/notification_service.dart';
 // import 'utils/app_theme.dart';
 
 void main() async {
@@ -27,6 +29,8 @@ void main() async {
     await HiveService.init();
     // Checklist now uses SharedPreferences-based storage; no heavy database init
     await AdMobService.initialize();
+    // Initialize local notifications (channels, permissions where applicable)
+    await NotificationService.initialize();
 
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
@@ -139,6 +143,11 @@ final GoRouter _router = GoRouter(
       path: '/settings',
       name: 'settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/calendar',
+      name: 'calendar',
+      builder: (context, state) => const CalendarScreen(),
     ),
   ],
 );

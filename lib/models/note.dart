@@ -31,6 +31,10 @@ class Note extends HiveObject {
   @HiveField(8)
   late String category;
 
+  // Optional reminder timestamp; null means no reminder set
+  @HiveField(9)
+  DateTime? reminderTime;
+
   Note({
     required this.id,
     required this.title,
@@ -41,6 +45,7 @@ class Note extends HiveObject {
     required this.createdAt,
     required this.updatedAt,
     this.category = 'Personal',
+    this.reminderTime,
   });
 
   String get moodEmoji {
@@ -70,6 +75,7 @@ class Note extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? category,
+    DateTime? reminderTime,
   }) {
     return Note(
       id: id ?? this.id,
@@ -81,6 +87,7 @@ class Note extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       category: category ?? this.category,
+      reminderTime: reminderTime ?? this.reminderTime,
     );
   }
 
@@ -95,6 +102,7 @@ class Note extends HiveObject {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'category': category,
+      'reminderTime': reminderTime?.millisecondsSinceEpoch,
     };
   }
 
@@ -109,6 +117,9 @@ class Note extends HiveObject {
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt']),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(json['updatedAt']),
       category: json['category'] ?? 'Personal',
+      reminderTime: json['reminderTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['reminderTime'])
+          : null,
     );
   }
 }

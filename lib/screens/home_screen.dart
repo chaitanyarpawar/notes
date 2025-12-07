@@ -23,18 +23,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedCategoryIndex = 0;
   bool _isBannerAdLoaded = false;
   bool _isSelectionMode = false;
   final Set<String> _selectedNoteIds = <String>{};
-
-  final List<String> _categories = [
-    'All',
-    'Personal',
-    'Work',
-    'Ideas',
-    'Important',
-  ];
+  int _currentTabIndex = 0; // 0: Notes, 1: Calendar
 
   @override
   void initState() {
@@ -65,141 +57,275 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        leading: _isSelectionMode
-            ? IconButton(
-                icon: const Icon(Icons.close, color: Colors.black54),
-                onPressed: _exitSelectionMode,
-              )
-            : null,
-        title: _isSelectionMode
-            ? Text(
-                '${_selectedNoteIds.length} selected',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              )
-            : const Text(
-                AppConstants.appName,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+        title: Row(
+          children: [
+            if (!_isSelectionMode) ...[
+              const Expanded(
+                child: Text(
+                  AppConstants.appName,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: _isSelectionMode
-            ? [
-                if (_selectedNoteIds.isNotEmpty) ...[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.black54,
-                    onPressed: _deleteSelectedNotes,
+                    tooltip: 'Select notes',
+                    icon: const Icon(Icons.check_box_outlined),
+                    color: const Color(0xFFFF9500),
+                    onPressed: _enterSelectionMode,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.archive_outlined),
+                    icon: const Icon(Icons.account_circle_outlined, size: 26),
                     color: Colors.black54,
-                    onPressed: _archiveSelectedNotes,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SettingsScreen()),
+                      );
+                    },
                   ),
                 ],
-              ]
-            : [
-                IconButton(
-                  icon: const Icon(Icons.checklist),
-                  color: Colors.black54,
-                  onPressed: _enterSelectionMode,
+              ),
+            ] else ...[
+              Expanded(
+                child: Text(
+                  '${_selectedNoteIds.length} selected',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.account_circle_outlined, size: 28),
-                  color: Colors.black54,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SettingsScreen()),
-                    );
-                  },
-                ),
-              ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                color: Colors.redAccent,
+                onPressed:
+                    _selectedNoteIds.isEmpty ? null : _deleteSelectedNotes,
+                tooltip: 'Delete selected',
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                color: Colors.black54,
+                onPressed: _exitSelectionMode,
+                tooltip: 'Cancel',
+              ),
+            ],
+          ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Search Bar
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: CustomSearchBar(
-              onChanged: (query) {
-                final notesProvider = context.read<NotesProvider>();
-                // Set search query without affecting filtered notes list
-                notesProvider.searchNotes(query);
-                setState(() {}); // Trigger rebuild to apply search
-              },
-              onClear: () {
-                final notesProvider = context.read<NotesProvider>();
-                notesProvider.clearSearch();
-                setState(() {}); // Trigger rebuild to clear search
-              },
-            ),
-          ),
-
-          // Category Tabs
-          Container(
-            height: 50,
-            color: Colors.white,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final isSelected = index == _selectedCategoryIndex;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedCategoryIndex = index;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFFF9500)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
+      body: SafeArea(
+        bottom: true,
+        child: Column(
+          children: [
+            // Search Bar
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CustomSearchBar(
+                      onChanged: (query) {
+                        final notesProvider = context.read<NotesProvider>();
+                        notesProvider.searchNotes(query);
+                        setState(() {});
+                      },
+                      onClear: () {
+                        final notesProvider = context.read<NotesProvider>();
+                        notesProvider.clearSearch();
+                        setState(() {});
+                      },
                     ),
-                    child: Text(
-                      _categories[index],
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black54,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w500,
-                        fontSize: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    height: 40,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // Unified filters in one place
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (_) {
+                            final notesProvider = context.read<NotesProvider>();
+                            const categories = [
+                              'Personal',
+                              'Work',
+                              'Ideas',
+                              'Important',
+                            ];
+                            return SizedBox(
+                              height: 360,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Filters',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 16.0),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Category',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: categories.length,
+                                    itemBuilder: (context, index) {
+                                      final cat = categories[index];
+                                      final selected =
+                                          notesProvider.selectedCategory;
+                                      final isSelected = selected != null &&
+                                          selected.toLowerCase() ==
+                                              cat.toLowerCase();
+
+                                      const Color selectedColor =
+                                          Color(0xFFFF9500);
+                                      return ListTile(
+                                        leading: Icon(
+                                          Icons.label_outline,
+                                          color: isSelected
+                                              ? selectedColor
+                                              : Colors.black45,
+                                        ),
+                                        title: Text(
+                                          cat,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? selectedColor
+                                                : Colors.black87,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                          ),
+                                        ),
+                                        selected: isSelected,
+                                        selectedTileColor: selectedColor
+                                            .withValues(alpha: 0.06),
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                          notesProvider
+                                              .setSelectedCategory(cat);
+                                          setState(() {});
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const Divider(height: 16),
+                                  ListTile(
+                                    leading: const Icon(Icons.clear_all),
+                                    title: const Text('Clear filters'),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      notesProvider.clearAllFilters();
+                                      notesProvider.clearSearch();
+                                      setState(() {});
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.filter_list),
+                      label: const Text('Filter'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black87,
                       ),
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-          ),
 
-          // Notes List
-          Expanded(
-            child: _buildNotesTab(),
-          ),
-
-          // Banner Ad
-          if (_isBannerAdLoaded && AdMobService.bannerAd != null)
-            Container(
-              alignment: Alignment.center,
-              width: AdMobService.bannerAd!.size.width.toDouble(),
-              height: AdMobService.bannerAd!.size.height.toDouble(),
-              margin: const EdgeInsets.only(bottom: 16),
-              child: AdWidget(ad: AdMobService.bannerAd!),
+            // Notes List
+            Expanded(
+              child: _buildNotesTab(),
             ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Show test ads above the navigation bar
+          SizedBox(
+            height: 48,
+            child: (_isBannerAdLoaded && AdMobService.bannerAd != null)
+                ? Center(child: AdWidget(ad: AdMobService.bannerAd!))
+                : Container(
+                    color: Colors.white,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'space for ads',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+          ),
+          BottomNavigationBar(
+            currentIndex: _currentTabIndex,
+            onTap: (index) {
+              // Keep Notes tab highlighted; open Calendar as a separate route
+              if (index == 1) {
+                // Immediately ensure Notes remains highlighted
+                if (_currentTabIndex != 0) {
+                  setState(() {
+                    _currentTabIndex = 0;
+                  });
+                }
+                try {
+                  GoRouter.of(context).push('/calendar');
+                } catch (_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Calendar view coming soon')),
+                  );
+                }
+                // Do not change _currentTabIndex so Notes remains highlighted
+                return;
+              }
+              setState(() {
+                _currentTabIndex = index;
+              });
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.note),
+                label: 'Notes',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_today),
+                label: 'Calendar',
+              ),
+            ],
+          ),
         ],
       ),
       floatingActionButton: Column(
@@ -224,8 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<NotesProvider>(
       builder: (context, notesProvider, child) {
         // Start from provider's filtered notes (search applied), then apply category filtering
-        final searchedNotes = notesProvider.notes;
-        final filteredNotes = _getFilteredNotes(searchedNotes);
+        final filteredNotes = notesProvider.notes;
 
         return filteredNotes.isEmpty
             ? _buildEmptyState()
@@ -241,13 +366,18 @@ class _HomeScreenState extends State<HomeScreen> {
         await Future.delayed(const Duration(milliseconds: 500));
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 0,
+          bottom: MediaQuery.of(context).viewPadding.bottom + 16,
+        ),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+            crossAxisCount: 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.8,
+            childAspectRatio: 0.75,
           ),
           itemCount: notes.length,
           itemBuilder: (context, index) {
@@ -337,13 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showCreateNoteOptions() {
-    // Use selected category from current filter - if All is selected, default to Personal
-    final selectedCategory = _selectedCategoryIndex == 0
-        ? 'Personal'
-        : _categories[_selectedCategoryIndex];
-
-    debugPrint(
-        '🏠 HomeScreen: Showing create options for category: $selectedCategory (index: $_selectedCategoryIndex)');
+    // Default category handled in _createNewNote
 
     showModalBottomSheet(
       context: context,
@@ -388,13 +512,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _createNewNote([bool isChecklist = false]) async {
-    // Use selected category from current filter - if All is selected, default to Personal
-    final selectedCategory = _selectedCategoryIndex == 0
-        ? 'Personal'
-        : _categories[_selectedCategoryIndex];
-
-    debugPrint(
-        '🏠 HomeScreen: Creating new ${isChecklist ? 'checklist' : 'note'} with category: $selectedCategory (filter index: $_selectedCategoryIndex)');
+    // Default category to Personal
+    const selectedCategory = 'Personal';
 
     final route = isChecklist
         ? '/checklist/new?category=$selectedCategory'
@@ -431,32 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Note> _getFilteredNotes(List<Note> notes) {
-    if (_selectedCategoryIndex == 0) {
-      debugPrint(
-          '🏠 HomeScreen: Showing all ${notes.length} notes (All category selected)');
-      return notes; // 'All' category
-    }
-
-    final selectedCategory = _categories[_selectedCategoryIndex];
-    final filteredNotes =
-        notes.where((note) => note.category == selectedCategory).toList();
-    debugPrint(
-        '🏠 HomeScreen: Filtering for category "$selectedCategory" - Found ${filteredNotes.length}/${notes.length} notes');
-
-    if (notes.isNotEmpty) {
-      final allCategories = notes.map((n) => n.category).toSet();
-      debugPrint('🏠 HomeScreen: Available categories: $allCategories');
-
-      // Debug each note's category
-      for (final note in notes) {
-        debugPrint(
-            '🏠 HomeScreen: Note "${note.title}" has category: "${note.category}"');
-      }
-    }
-
-    return filteredNotes;
-  }
+  // Category filters removed; rely on search and unified Filter button
 
   void _enterSelectionMode() {
     setState(() {
@@ -494,16 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _archiveSelectedNotes() async {
-    final notesProvider = context.read<NotesProvider>();
-    for (final noteId in _selectedNoteIds) {
-      final note = notesProvider.getNoteById(noteId);
-      if (note != null) {
-        await notesProvider.toggleArchive(noteId);
-      }
-    }
-    _exitSelectionMode();
-  }
+  // _archiveSelectedNotes removed (unused)
 
   Future<bool?> _showDeleteConfirmation(String message) {
     return showDialog<bool>(

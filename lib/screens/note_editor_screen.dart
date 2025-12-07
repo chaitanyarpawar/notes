@@ -41,6 +41,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   bool _isSaving = false;
   Timer? _debounceTimer;
   String _selectedCategory = 'Personal';
+  DateTime? _reminderTime;
+  String? _lastSavedSignature;
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         _contentController.text = _currentNote!.content;
         _selectedColor = _currentNote!.color;
         _selectedCategory = _currentNote!.category;
+        _reminderTime = _currentNote!.reminderTime;
         debugPrint(
             '📝 NoteEditor: Loaded existing note - Category: ${_currentNote!.category}');
       } else {
@@ -131,8 +134,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       return;
     }
 
-    // Unfocus input fields to ensure text controllers are up-to-date
-    if (mounted) {
+    // For manual saves, unfocus to ensure controllers are up-to-date.
+    // Avoid unfocus during auto-saves to prevent keyboard minimizing while typing.
+    if (mounted && !isAutoSave) {
       FocusScope.of(context).unfocus();
     }
 
@@ -149,6 +153,30 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     debugPrint(
         '📝 NoteEditor: Content length: ${_contentController.text.trim().length}');
 
+    // Build a signature to avoid redundant saves when nothing changed
+    String buildSignature() {
+      final buf = StringBuffer()
+        ..write(_titleController.text.trim())
+        ..write('|')
+        ..write(_contentController.text.trim())
+        ..write('|')
+        ..write(_selectedColor.index)
+        ..write('|')
+        ..write(_selectedCategory)
+        ..write('|')
+        ..write(_reminderTime?.millisecondsSinceEpoch ?? 0);
+      return buf.toString();
+    }
+
+    final newSignature = buildSignature();
+    if (_lastSavedSignature == newSignature) {
+      setState(() {
+        _hasUnsavedChanges = false;
+        _isSaving = false;
+      });
+      return;
+    }
+
     try {
       if (_currentNoteId != null) {
         // Update existing note (either initially existing or created during this session)
@@ -163,6 +191,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             content: _contentController.text.trim(),
             color: _selectedColor,
             category: _selectedCategory, // ✅ Category preserved in update
+            reminderTime: _reminderTime,
           );
 
           await notesProvider.updateNote(updatedNote);
@@ -183,6 +212,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           content: _contentController.text.trim(),
           color: _selectedColor,
           category: _selectedCategory, // ✅ Category included in create
+          reminderTime: _reminderTime,
         );
 
         // Set the noteId and current note so all subsequent saves will update
@@ -201,17 +231,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     } catch (e) {
       // Handle any errors during save
       debugPrint('❌ NoteEditor: Error saving note: $e');
-      if (mounted && showSnackbar) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save note')),
-        );
-      }
+      // Removed failure SnackBar entirely per user request
     }
 
     if (mounted) {
       setState(() {
         _hasUnsavedChanges = false;
         _isSaving = false;
+        _lastSavedSignature = newSignature;
       });
 
       if (showSnackbar) {
@@ -404,6 +431,41 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
               maxLines: 1,
               textCapitalization: TextCapitalization.sentences,
+            ),
+          ),
+
+          // Reminder row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _pickReminder,
+                  icon: const Icon(Icons.alarm),
+                  label: const Text('Set Reminder'),
+                ),
+                const SizedBox(width: 12),
+                if (_reminderTime != null)
+                  Flexible(
+                    child: Text(
+                      _formatReminder(_reminderTime!),
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                  ),
+                if (_reminderTime != null) ...[
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: _clearReminder,
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text('Clear'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
 
@@ -725,5 +787,63 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         );
       },
     );
+  }
+
+  Future<void> _pickReminder() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null) return;
+    if (!mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (time == null) return;
+    final dt =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    setState(() {
+      _reminderTime = dt;
+      _hasUnsavedChanges = true;
+    });
+    // Auto-save after reminder set
+    if (!mounted) return;
+    await _autoSave();
+  }
+
+  String _formatReminder(DateTime dt) {
+    final d = dt.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    final ampm = d.hour >= 12 ? 'PM' : 'AM';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final wd = weekdays[d.weekday - 1];
+    final mn = months[d.month - 1];
+    return '$wd, ${d.day} $mn ${d.year}  ${two(hour)}:${two(d.minute)} $ampm';
+  }
+
+  Future<void> _clearReminder() async {
+    setState(() {
+      _reminderTime = null;
+      _hasUnsavedChanges = true;
+    });
+    await _autoSave();
   }
 }

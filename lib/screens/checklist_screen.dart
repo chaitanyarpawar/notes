@@ -35,6 +35,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   bool _isEditing = false;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
+  DateTime? _reminderTime;
+  bool _savingReminder = false;
+  String? _lastSavedSignature;
+  int? _autofocusIndex;
 
   @override
   void initState() {
@@ -59,6 +63,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         _titleController.text = _currentNote!.title;
         _selectedColor = _currentNote!.color;
         _selectedCategory = _currentNote!.category;
+        _reminderTime = _currentNote!.reminderTime;
         _isEditing = true;
 
         // Load checklist items from database
@@ -149,8 +154,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         controller.addListener(_onTextChanged);
         _itemControllers.add(controller);
 
+        // Ensure provider items are refreshed so ListView reflects the new item
+        await checklistProvider.loadChecklistItems(_currentNote!.id);
         setState(() {
           _hasUnsavedChanges = true;
+          _autofocusIndex = checklistProvider.items.length - 1;
         });
 
         // Focus on the new item after a short delay
@@ -161,7 +169,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               if (mounted) {
                 final lastIndex = _itemControllers.length - 1;
                 if (lastIndex >= 0 && lastIndex < _itemControllers.length) {
-                  // Can't directly focus controller, but the UI will auto-focus new empty fields
+                  // Trigger a rebuild; TextField with autofocus will gain focus
                   setState(() {});
                 }
               }
@@ -204,6 +212,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   Future<void> _saveChecklist() async {
+    // Prevent overlapping saves (race conditions)
+    if (_isSaving) {
+      return;
+    }
     final title = _titleController.text.trim().isEmpty
         ? 'Untitled Checklist'
         : _titleController.text.trim();
@@ -238,42 +250,75 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       contentPreview = '☐ Add your first item';
     }
 
-    if (_isEditing && _currentNote != null) {
-      // Update existing note with checklist content
-      final updatedNote = _currentNote!.copyWith(
-        title: title,
-        content: contentPreview, // Show actual checklist items
-        color: _selectedColor,
-        category: _selectedCategory,
-      );
-      await notesProvider.updateNote(updatedNote);
-      _currentNote = updatedNote;
-      debugPrint(
-          '✅ ChecklistScreen: Updated checklist note with ${updatedItems.length} items');
-    } else if (!_isSaving) {
-      // Create new note first
-      setState(() {
-        _isSaving = true;
-      });
+    // Build a signature of the content to avoid redundant saves
+    final sigBuffer = StringBuffer()
+      ..write(title)
+      ..write('|')
+      ..write(_selectedCategory)
+      ..write('|')
+      ..write(_selectedColor.index)
+      ..write('|')
+      ..write(_reminderTime?.millisecondsSinceEpoch ?? 0)
+      ..write('|')
+      ..write(updatedItems.length);
+    for (final it in updatedItems) {
+      sigBuffer
+        ..write(it.isChecked ? '1' : '0')
+        ..write(':')
+        ..write(it.text);
+    }
+    final newSignature = sigBuffer.toString();
 
-      debugPrint(
-          '📋 ChecklistScreen: About to create note with category: $_selectedCategory');
-      final newNote = await notesProvider.createNote(
-        title: title,
-        content: contentPreview, // Show actual checklist items
-        color: _selectedColor,
-        category: _selectedCategory,
-      );
+    if (_lastSavedSignature == newSignature) {
+      // No functional changes since last save; skip
+      _hasUnsavedChanges = false;
+      return;
+    }
 
-      _currentNote = newNote;
-      _isEditing = true;
-      debugPrint(
-          '✅ ChecklistScreen: Created new checklist with ${updatedItems.length} items, final category: ${newNote.category}');
+    try {
+      if (_isEditing && _currentNote != null) {
+        // Update existing note with checklist content
+        final updatedNote = _currentNote!.copyWith(
+          title: title,
+          content: contentPreview, // Show actual checklist items
+          color: _selectedColor,
+          category: _selectedCategory,
+          reminderTime: _reminderTime,
+        );
+        await notesProvider.updateNote(updatedNote);
+        _currentNote = updatedNote;
+        debugPrint(
+            '✅ ChecklistScreen: Updated checklist note with ${updatedItems.length} items');
+      } else if (!_isSaving) {
+        // Create new note first
+        setState(() {
+          _isSaving = true;
+        });
 
-      if (mounted) {
-        final settingsProvider = context.read<SettingsProvider>();
-        await settingsProvider.incrementNoteCount();
+        debugPrint(
+            '📋 ChecklistScreen: About to create note with category: $_selectedCategory');
+        final newNote = await notesProvider.createNote(
+          title: title,
+          content: contentPreview, // Show actual checklist items
+          color: _selectedColor,
+          category: _selectedCategory,
+          reminderTime: _reminderTime,
+        );
+
+        _currentNote = newNote;
+        _isEditing = true;
+        debugPrint(
+            '✅ ChecklistScreen: Created new checklist with ${updatedItems.length} items, final category: ${newNote.category}');
+
+        if (mounted) {
+          final settingsProvider = context.read<SettingsProvider>();
+          await settingsProvider.incrementNoteCount();
+        }
       }
+    } catch (e, st) {
+      debugPrint('❌ ChecklistScreen: Save failed: $e');
+      debugPrint('❌ ChecklistScreen: Stack: $st');
+      // Removed failure SnackBar to avoid user confusion
     }
 
     setState(() {
@@ -289,6 +334,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         ),
       );
     }
+
+    // Update last saved signature after successful save
+    _lastSavedSignature = newSignature;
   }
 
   @override
@@ -374,6 +422,42 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         color: Colors.black87,
                       ),
                       maxLines: 1,
+                    ),
+                  ),
+
+                  // Reminder row
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _pickReminder,
+                          icon: const Icon(Icons.alarm),
+                          label: const Text('Set Reminder'),
+                        ),
+                        const SizedBox(width: 12),
+                        if (_reminderTime != null)
+                          Flexible(
+                            child: Text(
+                              _formatReminder(_reminderTime!),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.black54),
+                            ),
+                          ),
+                        if (_reminderTime != null) ...[
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            onPressed: _clearReminder,
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text('Clear'),
+                            style: TextButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 
@@ -495,6 +579,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                                           hintText: 'Enter item',
                                           contentPadding: EdgeInsets.zero,
                                         ),
+                                        autofocus: index == _autofocusIndex,
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.black87,
@@ -532,87 +617,101 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               ),
 
               // Bottom bar
-              bottomNavigationBar: Container(
-                height: 80,
-                color: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  children: [
-                    // Color picker button
-                    GestureDetector(
-                      onTap: _showColorPicker,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.palette_outlined,
-                          color: Colors.black54,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    // Category button
-                    GestureDetector(
-                      onTap: _showCategoryPicker,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.label_outline,
-                          color: Colors.black54,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // Save button
-                    GestureDetector(
-                      onTap: _isSaving
-                          ? null
-                          : () async {
-                              if (!_isSaving) {
-                                setState(() {
-                                  _isSaving = true;
-                                });
-                                final navigator = Navigator.of(context);
-                                await _saveChecklist();
-                                if (mounted) {
-                                  navigator.pop();
-                                }
-                              }
-                            },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2196F3),
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+              bottomNavigationBar: SafeArea(
+                top: false,
+                bottom: true,
+                child: Container(
+                  color: Colors.white,
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 12,
+                    bottom: MediaQuery.of(context).viewPadding.bottom + 12,
+                  ),
+                  child: Row(
+                    children: [
+                      // Color picker button
+                      GestureDetector(
+                        onTap: _showColorPicker,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.palette_outlined,
+                            color: Colors.black54,
+                            size: 20,
                           ),
                         ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(width: 16),
+
+                      // Category button
+                      GestureDetector(
+                        onTap: _showCategoryPicker,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.label_outline,
+                            color: Colors.black54,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Save button
+                      GestureDetector(
+                        onTap: _isSaving
+                            ? null
+                            : () async {
+                                if (!_isSaving) {
+                                  setState(() {
+                                    _isSaving = true;
+                                  });
+                                  final navigator = Navigator.of(context);
+                                  await _saveChecklist();
+                                  if (mounted) {
+                                    navigator.pop();
+                                  }
+                                }
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2196F3),
+                            borderRadius: BorderRadius.circular(25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ));
@@ -745,5 +844,77 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickReminder() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null) return;
+    if (!mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (time == null) return;
+    final dt =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    if (_savingReminder) return;
+    setState(() {
+      _savingReminder = true;
+      // Always ensure we have a valid title to avoid validation issues
+      if (_titleController.text.trim().isEmpty) {
+        _titleController.text = 'Untitled Checklist';
+      }
+      _reminderTime = dt;
+      _hasUnsavedChanges = true;
+    });
+    if (!mounted) {
+      setState(() {
+        _savingReminder = false;
+      });
+      return;
+    }
+    // Save sequentially to ensure the note exists before scheduling
+    await _saveChecklist();
+    setState(() {
+      _savingReminder = false;
+    });
+  }
+
+  String _formatReminder(DateTime dt) {
+    final d = dt.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
+    final ampm = d.hour >= 12 ? 'PM' : 'AM';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final wd = weekdays[d.weekday - 1];
+    final mn = months[d.month - 1];
+    return '$wd, ${d.day} $mn ${d.year}  ${two(hour)}:${two(d.minute)} $ampm';
+  }
+
+  Future<void> _clearReminder() async {
+    setState(() {
+      _reminderTime = null;
+      _hasUnsavedChanges = true;
+    });
+    await _saveChecklist();
   }
 }
