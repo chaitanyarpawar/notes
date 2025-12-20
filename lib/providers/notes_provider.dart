@@ -21,6 +21,7 @@ class NotesProvider extends ChangeNotifier {
 
   NotesProvider() {
     _loadNotes();
+    _clearExpiredReminders();
   }
 
   // Getters
@@ -262,6 +263,46 @@ class NotesProvider extends ChangeNotifier {
     _selectedCategory = null;
     _applyFilters();
     notifyListeners();
+  }
+
+  /// Auto-clear expired reminders when the app loads
+  Future<void> _clearExpiredReminders() async {
+    final now = DateTime.now();
+    bool hasChanges = false;
+
+    for (final note in _notes) {
+      if (note.reminderTime != null && note.reminderTime!.isBefore(now)) {
+        debugPrint(
+            '🧹 NotesProvider: Clearing expired reminder for note ${note.id}');
+        final updatedNote = note.copyWith(
+          clearReminder: true,
+          clearNotificationId: true,
+          updatedAt: now,
+        );
+        await _notesBox.put(note.id, updatedNote);
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      _loadNotes();
+      debugPrint('✅ NotesProvider: Expired reminders cleared');
+    }
+  }
+
+  /// Clear the reminder for a specific note by ID (called when notification is delivered/tapped)
+  Future<void> clearReminderForNote(String noteId) async {
+    final note = _notesBox.get(noteId);
+    if (note != null && note.reminderTime != null) {
+      debugPrint('🧹 NotesProvider: Clearing reminder for note $noteId');
+      final updatedNote = note.copyWith(
+        clearReminder: true,
+        clearNotificationId: true,
+        updatedAt: DateTime.now(),
+      );
+      await _notesBox.put(noteId, updatedNote);
+      _loadNotes();
+    }
   }
 
   Note? getNoteById(String id) {

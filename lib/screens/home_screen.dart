@@ -56,229 +56,130 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (!_isSelectionMode) ...[
-              const Expanded(
-                child: Text(
-                  AppConstants.appName,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+      body: Column(
+        children: [
+          // Orange header section similar to HighwayMate
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFFF9500),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: Row(
+                  children: [
+                    if (!_isSelectionMode) ...[
+                      // App name
+                      const Expanded(
+                        child: Text(
+                          AppConstants.appName,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      // Checkbox icon for selection mode
+                      IconButton(
+                        tooltip: 'Select notes',
+                        icon: const Icon(Icons.check_box_outlined,
+                            color: Colors.white, size: 26),
+                        onPressed: _enterSelectionMode,
+                      ),
+                      // Menu icon (hamburger)
+                      IconButton(
+                        icon: const Icon(Icons.menu,
+                            color: Colors.white, size: 26),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                    ] else ...[
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: _exitSelectionMode,
+                        tooltip: 'Cancel',
+                      ),
+                      Expanded(
+                        child: Text(
+                          '${_selectedNoteIds.length} selected',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline,
+                            color: Colors.white),
+                        onPressed: _selectedNoteIds.isEmpty
+                            ? null
+                            : _deleteSelectedNotes,
+                        tooltip: 'Delete selected',
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Select notes',
-                    icon: const Icon(Icons.check_box_outlined),
-                    color: const Color(0xFFFF9500),
-                    onPressed: _enterSelectionMode,
-                  ),
-                  // Archived icon removed from app bar
-                  IconButton(
-                    icon: const Icon(Icons.account_circle_outlined, size: 26),
-                    color: Colors.black54,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SettingsScreen()),
-                      );
+            ),
+          ),
+
+          // Search and filter section
+          Container(
+            color: const Color(0xFFF5F5F5),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomSearchBar(
+                    onChanged: (query) {
+                      final notesProvider = context.read<NotesProvider>();
+                      notesProvider.searchNotes(query);
+                      setState(() {});
+                    },
+                    onClear: () {
+                      final notesProvider = context.read<NotesProvider>();
+                      notesProvider.clearSearch();
+                      setState(() {});
                     },
                   ),
-                ],
-              ),
-            ] else ...[
-              Expanded(
-                child: Text(
-                  '${_selectedNoteIds.length} selected',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 40,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Unified filters in one place
+                      _showFilterBottomSheet();
+                    },
+                    icon: const Icon(Icons.filter_list),
+                    label: const Text('Filter'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                color: Colors.redAccent,
-                onPressed:
-                    _selectedNoteIds.isEmpty ? null : _deleteSelectedNotes,
-                tooltip: 'Delete selected',
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                color: Colors.black54,
-                onPressed: _exitSelectionMode,
-                tooltip: 'Cancel',
-              ),
-            ],
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        bottom: true,
-        child: Column(
-          children: [
-            // Search Bar
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: CustomSearchBar(
-                      onChanged: (query) {
-                        final notesProvider = context.read<NotesProvider>();
-                        notesProvider.searchNotes(query);
-                        setState(() {});
-                      },
-                      onClear: () {
-                        final notesProvider = context.read<NotesProvider>();
-                        notesProvider.clearSearch();
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 40,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // Unified filters in one place
-                        showModalBottomSheet(
-                          context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(20)),
-                          ),
-                          builder: (_) {
-                            final notesProvider = context.read<NotesProvider>();
-                            const categories = [
-                              'Personal',
-                              'Work',
-                              'Ideas',
-                              'Important',
-                            ];
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(height: 16),
-                                  const Text(
-                                    'Filters',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 16.0),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        'Category',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: categories.length,
-                                    itemBuilder: (context, index) {
-                                      final cat = categories[index];
-                                      final selected =
-                                          notesProvider.selectedCategory;
-                                      final isSelected = selected != null &&
-                                          selected.toLowerCase() ==
-                                              cat.toLowerCase();
-
-                                      const Color selectedColor =
-                                          Color(0xFFFF9500);
-                                      return ListTile(
-                                        leading: Icon(
-                                          Icons.label_outline,
-                                          color: isSelected
-                                              ? selectedColor
-                                              : Colors.black45,
-                                        ),
-                                        title: Text(
-                                          cat,
-                                          style: TextStyle(
-                                            color: isSelected
-                                                ? selectedColor
-                                                : Colors.black87,
-                                            fontWeight: isSelected
-                                                ? FontWeight.w700
-                                                : FontWeight.w500,
-                                          ),
-                                        ),
-                                        selected: isSelected,
-                                        selectedTileColor: selectedColor
-                                            .withValues(alpha: 0.06),
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          notesProvider
-                                              .setSelectedCategory(cat);
-                                          setState(() {});
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  const Divider(height: 16),
-                                  ListTile(
-                                    leading: const Icon(Icons.clear_all,
-                                        color: Colors.redAccent),
-                                    title: const Text(
-                                      'Clear filters',
-                                      style: TextStyle(color: Colors.redAccent),
-                                    ),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      notesProvider.clearAllFilters();
-                                      notesProvider.clearSearch();
-                                      setState(() {});
-                                    },
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      icon: const Icon(Icons.filter_list),
-                      label: const Text('Filter'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
 
-            // Notes List
-            Expanded(
-              child: _buildNotesTab(),
-            ),
-          ],
-        ),
+          // Notes List
+          Expanded(
+            child: _buildNotesTab(),
+          ),
+        ],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -413,61 +314,59 @@ class _HomeScreenState extends State<HomeScreen> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Brand icon drawn via CustomPaint to match design
-            const AppBrandIcon(size: 200),
-            const SizedBox(height: 40),
-            // "No notes yet" title
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2D3748),
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Subtitle
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            // Create note button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _createNewNote,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9500),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Create your first note',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // "No notes yet" title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2D3748),
+                  letterSpacing: -0.5,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 12),
+              // Subtitle
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Create note button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _createNewNote,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF9500),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Create your first note',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -558,6 +457,102 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Category filters removed; rely on search and unified Filter button
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        final notesProvider = context.read<NotesProvider>();
+        const categories = [
+          'Personal',
+          'Work',
+          'Ideas',
+          'Important',
+        ];
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              const Text(
+                'Filters',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Category',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final selected = notesProvider.selectedCategory;
+                  final isSelected = selected != null &&
+                      selected.toLowerCase() == cat.toLowerCase();
+
+                  const Color selectedColor = Color(0xFFFF9500);
+                  return ListTile(
+                    leading: Icon(
+                      Icons.label_outline,
+                      color: isSelected ? selectedColor : Colors.black45,
+                    ),
+                    title: Text(
+                      cat,
+                      style: TextStyle(
+                        color: isSelected ? selectedColor : Colors.black87,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedTileColor: selectedColor.withValues(alpha: 0.06),
+                    onTap: () {
+                      Navigator.pop(context);
+                      notesProvider.setSelectedCategory(cat);
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
+              const Divider(height: 16),
+              ListTile(
+                leading: const Icon(Icons.clear_all, color: Colors.redAccent),
+                title: const Text(
+                  'Clear filters',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  notesProvider.clearAllFilters();
+                  notesProvider.clearSearch();
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _enterSelectionMode() {
     setState(() {

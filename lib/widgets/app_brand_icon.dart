@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class AppBrandIcon extends StatelessWidget {
   final double size;
@@ -19,44 +20,48 @@ class AppBrandIcon extends StatelessWidget {
 class _AppBrandPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    // Orange rounded square background
     final bgPaint = Paint()..color = const Color(0xFFFF9500);
+    final cornerRadius = size.width * 0.22;
 
-    final rect = RRect.fromRectAndCorners(
+    final rect = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.width, size.height),
-      topLeft: const Radius.circular(32),
-      topRight: const Radius.circular(32),
-      bottomLeft: const Radius.circular(32),
-      bottomRight: const Radius.circular(32),
+      Radius.circular(cornerRadius),
     );
     canvas.drawRRect(rect, bgPaint);
 
-    // Lines
+    // Horizontal lines (lighter orange/tan color)
     final linePaint = Paint()
-      ..color = const Color(0xFFFFD083)
-      ..strokeWidth = size.height * 0.04
+      ..color = const Color(0xFFE8A040)
+      ..strokeWidth = size.height * 0.028
       ..strokeCap = StrokeCap.round;
 
-    final leftPad = size.width * 0.14;
-    final rightPad = size.width * 0.10;
-    final topPad = size.height * 0.22;
-    final gap = size.height * 0.17;
+    final leftPad = size.width * 0.12;
+    final rightPad = size.width * 0.12;
+    final topPad = size.height * 0.15;
+    final gap = size.height * 0.145;
 
-    for (int i = 0; i < 4; i++) {
+    // Draw 5 horizontal lines
+    for (int i = 0; i < 5; i++) {
       final y = topPad + gap * i;
       canvas.drawLine(
-          Offset(leftPad, y), Offset(size.width - rightPad, y), linePaint);
+        Offset(leftPad, y),
+        Offset(size.width - rightPad, y),
+        linePaint,
+      );
     }
 
-    // Pencil base (white body)
-    final pencilLen = size.width * 0.55;
+    // Pencil - positioned diagonally from upper-left to lower-right
+    final pencilLen = size.width * 0.58;
     final pencilThickness = size.width * 0.12;
-    const double pencilAngle = -0.35; // radians
-    final center = Offset(size.width * 0.60, size.height * 0.68);
+    const double pencilAngle = math.pi / 4; // 45 degrees
+    final pencilCenter = Offset(size.width * 0.62, size.height * 0.68);
 
     canvas.save();
-    canvas.translate(center.dx, center.dy);
+    canvas.translate(pencilCenter.dx, pencilCenter.dy);
     canvas.rotate(pencilAngle);
 
+    // Pencil body (white with rounded ends)
     final bodyRect = RRect.fromRectAndRadius(
       Rect.fromCenter(
         center: const Offset(0, 0),
@@ -68,28 +73,23 @@ class _AppBrandPainter extends CustomPainter {
     final bodyPaint = Paint()..color = Colors.white;
     canvas.drawRRect(bodyRect, bodyPaint);
 
-    // Pencil tip (triangle)
-    final tipWidth = pencilThickness * 0.9;
-    final tipHeight = tipWidth;
-    final tipPath = Path()
-      ..moveTo(pencilLen * 0.5, 0)
-      ..lineTo(pencilLen * 0.5 - tipHeight, -tipWidth * 0.5)
-      ..lineTo(pencilLen * 0.5 - tipHeight, tipWidth * 0.5)
-      ..close();
-    final tipPaint = Paint()..color = const Color(0xFFFFC54D);
+    // Pencil tip (yellow triangle on right side)
+    final tipPath = Path();
+    final tipStartX = pencilLen * 0.40;
+    tipPath.moveTo(tipStartX, -pencilThickness * 0.5);
+    tipPath.lineTo(pencilLen * 0.58, 0);
+    tipPath.lineTo(tipStartX, pencilThickness * 0.5);
+    tipPath.close();
+    final tipPaint = Paint()..color = const Color(0xFFFFD966);
     canvas.drawPath(tipPath, tipPaint);
 
-    // Pencil grip (small rounded yellow)
-    final gripPaint = Paint()..color = const Color(0xFFFFD083);
-    final gripRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(-pencilLen * 0.1, 0),
-        width: pencilThickness * 0.9,
-        height: pencilThickness * 0.9,
-      ),
-      Radius.circular(pencilThickness * 0.45),
+    // Yellow dot on pencil body (grip/eraser detail)
+    final dotPaint = Paint()..color = const Color(0xFFFFD966);
+    canvas.drawCircle(
+      Offset(-pencilLen * 0.08, 0),
+      pencilThickness * 0.28,
+      dotPaint,
     );
-    canvas.drawRRect(gripRect, gripPaint);
 
     canvas.restore();
   }

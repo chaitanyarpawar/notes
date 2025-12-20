@@ -70,18 +70,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
             icon: const Icon(Icons.today),
             onPressed: _goToToday,
           ),
-          // Archived icon removed from app bar
-          IconButton(
-            tooltip: 'Test Reminder',
-            icon: const Icon(Icons.notifications_active_outlined),
-            onPressed: () async {
-              await NotificationService.scheduleTestReminder();
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Test reminder scheduled in 5s')),
-              );
-            },
-          ),
         ],
       ),
       body: SafeArea(

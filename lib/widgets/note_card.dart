@@ -53,10 +53,9 @@ class NoteCard extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
             children: [
               // Header with selection checkbox, checklist indicator and pin indicator
               Row(
@@ -81,7 +80,7 @@ class NoteCard extends StatelessWidget {
                           margin: const EdgeInsets.only(right: 4),
                           child: Icon(
                             Icons.checklist,
-                            size: 16,
+                            size: 14,
                             color: Colors.grey.shade600,
                           ),
                         ),
@@ -90,89 +89,53 @@ class NoteCard extends StatelessWidget {
                   if (note.isPinned && !isArchived)
                     Icon(
                       Icons.push_pin,
-                      size: 16,
+                      size: 14,
                       color: Colors.grey.shade600,
                     ),
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // Title
               if (note.title.isNotEmpty)
                 Text(
                   note.title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
-                  softWrap: true,
                   overflow: TextOverflow.ellipsis,
                 ),
 
-              // Content preview: show on home cards (title + first lines)
-              // Tighter constraints: checklist 3 lines, notes 5 lines
-              if (note.content.isNotEmpty && note.content != 'Checklist') ...[
-                if (note.title.isNotEmpty) const SizedBox(height: 8),
-                Text(
-                  note.content,
-                  style: TextStyle(
-                    fontSize: _isChecklist ? 13 : 14,
-                    color: Colors.grey.shade700,
-                    height: 1.4,
-                    fontFamily: _isChecklist ? 'monospace' : null,
-                  ),
-                  maxLines: _isChecklist ? 3 : 5,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
+              // Content preview - use Expanded to fill available space and clip overflow
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: _buildContentPreview(),
                 ),
-              ] else if (note.content == 'Checklist') ...[
-                if (note.title.isNotEmpty) const SizedBox(height: 8),
-                Text(
-                  '☐ Add your first item',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
+              ),
 
-              const SizedBox(height: 8),
-
-              // Footer with date and category
+              // Footer with category chip at bottom-right
               Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: Text(
-                      _formatDate(note.updatedAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: chipBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        note.category,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: chipText,
-                        ),
+                    decoration: BoxDecoration(
+                      color: chipBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      note.category,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        color: chipText,
                       ),
                     ),
                   ),
@@ -185,31 +148,33 @@ class NoteCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final noteDate = DateTime(date.year, date.month, date.day);
-
-    if (noteDate == today) {
-      return 'Today ${_formatTime(date)}';
-    } else if (noteDate == yesterday) {
-      return 'Yesterday ${_formatTime(date)}';
-    } else if (now.difference(date).inDays < 7) {
-      return '${_getDayName(date.weekday)} ${_formatTime(date)}';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
+  Widget _buildContentPreview() {
+    if (note.content.isEmpty || note.content == 'Checklist') {
+      if (note.content == 'Checklist') {
+        return Text(
+          '☐ Add your first item',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade500,
+            fontStyle: FontStyle.italic,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        );
+      }
+      return const SizedBox.shrink();
     }
-  }
 
-  String _formatTime(DateTime date) {
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
-  String _getDayName(int weekday) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
+    return Text(
+      note.content,
+      style: TextStyle(
+        fontSize: _isChecklist ? 11 : 12,
+        color: Colors.grey.shade700,
+        height: 1.3,
+        fontFamily: _isChecklist ? 'monospace' : null,
+      ),
+      maxLines: _isChecklist ? 3 : 4,
+      overflow: TextOverflow.ellipsis,
+    );
   }
 }

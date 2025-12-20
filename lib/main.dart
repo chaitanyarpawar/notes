@@ -60,7 +60,14 @@ class PebbleNoteApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => NotesProvider()),
+        ChangeNotifierProvider(create: (context) {
+          final notesProvider = NotesProvider();
+          // Set up callback to clear reminders when notifications are delivered
+          NotificationService.onReminderDelivered = (noteId) async {
+            await notesProvider.clearReminderForNote(noteId);
+          };
+          return notesProvider;
+        }),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
         // Speech-to-text removed; no SpeechProvider
       ],

@@ -15,6 +15,9 @@ class NotificationService {
   static bool _initialized = false;
   static String _localTimeZone = 'UTC';
 
+  /// Callback to clear reminder from note when notification is delivered/tapped
+  static Future<void> Function(String noteId)? onReminderDelivered;
+
   // Create a stable integer ID from a string. This avoids collisions and
   // remains consistent across app launches unlike Dart's default hashCode.
   static int _stableId(String s) {
@@ -46,23 +49,36 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: (response) async {
         final payload = response.payload;
-        final ctx = NavigationService.navigatorKey.currentContext;
-        if (ctx == null) return;
         if (payload != null && payload.isNotEmpty) {
           try {
             final data = json.decode(payload) as Map<String, dynamic>;
             final id = data['id'] as String?;
             final type = data['type'] as String?;
-            if (id != null) {
-              if (type == 'checklist') {
-                ctx.push('/checklist/$id');
-              } else {
-                ctx.push('/note/$id');
+            if (id != null && id != 'TEST') {
+              // Clear the reminder from the note since it has been delivered
+              if (onReminderDelivered != null) {
+                await onReminderDelivered!(id);
+                debugPrint(
+                    '🧹 NotificationService: Cleared reminder for note $id');
+              }
+              // Navigate to the note/checklist (get fresh context after async)
+              final ctx = NavigationService.navigatorKey.currentContext;
+              if (ctx != null && ctx.mounted) {
+                if (type == 'checklist') {
+                  ctx.push('/checklist/$id');
+                } else {
+                  ctx.push('/note/$id');
+                }
               }
             }
-          } catch (_) {
+          } catch (e) {
+            debugPrint(
+                '⚠️ NotificationService: Error handling notification: $e');
             // Fallback: open home
-            ctx.go('/home');
+            final ctx = NavigationService.navigatorKey.currentContext;
+            if (ctx != null && ctx.mounted) {
+              ctx.go('/home');
+            }
           }
         }
       },

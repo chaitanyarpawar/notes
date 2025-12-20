@@ -104,16 +104,6 @@ class SettingsTabContent extends StatelessWidget {
                 color: Theme.of(context).primaryColor,
               ),
             ),
-            _buildSettingsTile(
-              title: 'Privacy Policy',
-              subtitle: 'How we handle your data',
-              leading: Icon(
-                Icons.privacy_tip_outlined,
-                color: Theme.of(context).primaryColor,
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => _showPrivacyPolicy(context),
-            ),
 
             const SizedBox(height: 24),
 
