@@ -101,7 +101,7 @@ class NotesProvider extends ChangeNotifier {
     DateTime? reminderTime,
   }) async {
     final now = DateTime.now();
-    final note = Note(
+    var note = Note(
       id: _uuid.v4(),
       title: title,
       content: content,
@@ -117,6 +117,12 @@ class NotesProvider extends ChangeNotifier {
     debugPrint(
         '💾 NotesProvider: Category passed: "$category", Note category: "${note.category}"');
     try {
+      // If reminder is set, compute and store notificationId before saving
+      if (note.reminderTime != null &&
+          note.reminderTime!.isAfter(DateTime.now())) {
+        final nid = NotificationService.computeNotificationId(note.id);
+        note = note.copyWith(notificationId: nid);
+      }
       await _notesBox.put(note.id, note);
     } catch (e, st) {
       debugPrint('❌ NotesProvider: Failed to write new note: $e');
@@ -135,10 +141,18 @@ class NotesProvider extends ChangeNotifier {
   }
 
   Future<void> updateNote(Note note) async {
-    final updatedNote = note.copyWith(updatedAt: DateTime.now());
+    var updatedNote = note.copyWith(updatedAt: DateTime.now());
     debugPrint(
         '💾 NotesProvider: Updating note - ID: ${note.id}, Category: ${updatedNote.category}, Title: "${updatedNote.title}"');
     try {
+      // Manage notificationId storage based on reminder state
+      if (updatedNote.reminderTime != null &&
+          updatedNote.reminderTime!.isAfter(DateTime.now())) {
+        final nid = NotificationService.computeNotificationId(updatedNote.id);
+        updatedNote = updatedNote.copyWith(notificationId: nid);
+      } else {
+        updatedNote = updatedNote.copyWith(notificationId: null);
+      }
       await _notesBox.put(note.id, updatedNote);
     } catch (e, st) {
       debugPrint('❌ NotesProvider: Failed to update note ${note.id}: $e');
@@ -254,15 +268,20 @@ class NotesProvider extends ChangeNotifier {
     return _notesBox.get(id);
   }
 
-  Future<void> duplicateNote(String noteId) async {
+  Future<Note?> duplicateNote(String noteId) async {
     final note = _notesBox.get(noteId);
     if (note != null) {
-      await createNote(
+      // Create the duplicated note preserving category and reminder
+      final newNote = await createNote(
         title: '${note.title} (Copy)',
         content: note.content,
         color: note.color,
+        category: note.category,
+        reminderTime: note.reminderTime,
       );
+      return newNote;
     }
+    return null;
   }
 
   Future<void> clearAllNotes() async {

@@ -70,6 +70,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             icon: const Icon(Icons.today),
             onPressed: _goToToday,
           ),
+          // Archived icon removed from app bar
           IconButton(
             tooltip: 'Test Reminder',
             icon: const Icon(Icons.notifications_active_outlined),

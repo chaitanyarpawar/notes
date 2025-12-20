@@ -7,7 +7,6 @@ import 'package:share_plus/share_plus.dart';
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
 import '../providers/settings_provider.dart';
-import '../providers/speech_provider.dart';
 import '../widgets/color_selector.dart';
 import '../utils/app_theme.dart';
 import '../widgets/lined_paper.dart';
@@ -192,6 +191,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             color: _selectedColor,
             category: _selectedCategory, // ✅ Category preserved in update
             reminderTime: _reminderTime,
+            clearReminder: _reminderTime == null,
           );
 
           await notesProvider.updateNote(updatedNote);
@@ -364,7 +364,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             icon: const Icon(Icons.share_outlined, color: Colors.black54),
             onPressed: _shareNote,
           ),
-          // Removed app bar mic; using bottom-right floating mic
+          // Mic removed: text-only input UI
           // Only show delete button for existing notes, keep it simple
           if (_currentNoteId != null && _currentNote != null)
             IconButton(
@@ -506,193 +506,100 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       ),
 
       // Bottom bar with actions
-      bottomNavigationBar: Container(
-        height: 80,
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            // Color picker button
-            GestureDetector(
-              onTap: _showColorPicker,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.palette_outlined,
-                  color: Colors.black54,
-                  size: 20,
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            // Category button with selected category display
-            GestureDetector(
-              onTap: _showCategoryPicker,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.category_outlined,
-                        color: Colors.black54, size: 18),
-                    SizedBox(width: 8),
-                    // Selected category label
-                    // (Tap to change category)
-                    // Using a const Text style for consistency
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-            Text(
-              _selectedCategory,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const Spacer(),
-
-            // Save button - now always visible and functional
-            GestureDetector(
-              onTap: _isSaving ? null : _handleManualSave,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _isSaving ? Colors.grey : const Color(0xFFFF9500),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Text(
-                  _isSaving ? 'Saving...' : 'Save',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          color: Colors.white,
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 12,
+            bottom: MediaQuery.of(context).viewPadding.bottom > 0 ? 12 : 16,
+          ),
+          child: Row(
+            children: [
+              // Color picker button
+              GestureDetector(
+                onTap: _showColorPicker,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.palette_outlined,
+                    color: Colors.black54,
+                    size: 20,
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
 
-      // Floating mic button bottom-right with glow and status
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _buildMicFab(context),
-    );
-  }
+              const SizedBox(width: 16),
 
-  Widget _buildMicFab(BuildContext context) {
-    final speech = context.read<SpeechProvider>();
-    final listening = context.watch<SpeechProvider>().isListening;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (listening)
-          Container(
-            margin: const EdgeInsets.only(bottom: 8, right: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF9500).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFFF9500).withValues(alpha: 0.3),
-              ),
-            ),
-            child: const Text(
-              'Listening…',
-              style: TextStyle(
-                color: Color(0xFFFF9500),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        GestureDetector(
-          onTap: () async {
-            if (listening) {
-              final text = context.read<SpeechProvider>().lastResult.trim();
-              await speech.stopListening();
-              if (text.isNotEmpty) {
-                // Append recognized text to the note content
-                final prefix = _contentController.text.isEmpty ? '' : ' ';
-                _contentController.text += '$prefix$text';
-                _hasUnsavedChanges = true;
-              }
-            } else {
-              final ok = await speech.startListening(localeId: 'en_US');
-              if (!ok && mounted) {
-                _showMicPermissionDialog();
-              }
-            }
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: listening
-                  ? [
-                      BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.6),
-                        blurRadius: 16,
-                        spreadRadius: 3,
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
+              // Category button with selected category display
+              GestureDetector(
+                onTap: _showCategoryPicker,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.category_outlined,
+                          color: Colors.black54, size: 18),
+                      SizedBox(width: 8),
+                      // Selected category label
+                      // (Tap to change category)
+                      // Using a const Text style for consistency
                     ],
-              border: Border.all(
-                color: listening ? Colors.orange : Colors.black26,
-                width: 1.2,
+                  ),
+                ),
               ),
-            ),
-            child: Icon(
-              listening ? Icons.mic : Icons.mic_none,
-              color: listening ? Colors.orange : Colors.black54,
-              size: 24,
-            ),
+
+              const SizedBox(width: 8),
+              Text(
+                _selectedCategory,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Save button - now always visible and functional
+              GestureDetector(
+                onTap: _isSaving ? null : _handleManualSave,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _isSaving ? Colors.grey : const Color(0xFFFF9500),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Text(
+                    _isSaving ? 'Saving...' : 'Save',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    );
-  }
-
-  void _showMicPermissionDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Microphone Access Needed'),
-        content: const Text(
-            'PebbleNote uses the microphone to convert your speech to text while writing notes. Please grant access in settings.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
       ),
+
+      // Mic input removed: no floating action button
     );
   }
 

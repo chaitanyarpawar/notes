@@ -180,4 +180,26 @@ class ChecklistProvider extends ChangeNotifier {
     _items = [];
     notifyListeners();
   }
+
+  /// Clone checklist items from one note to another.
+  /// Copies the stored SharedPreferences payload from `fromNoteId` to `toNoteId`.
+  Future<void> cloneChecklistItems(String fromNoteId, String toNoteId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fromKey = 'checklist_$fromNoteId';
+      final toKey = 'checklist_$toNoteId';
+      final itemsJson = prefs.getString(fromKey);
+      if (itemsJson != null) {
+        await prefs.setString(toKey, itemsJson);
+        // If currently viewing the destination note, refresh into state
+        if (_items.isEmpty ||
+            (_items.isNotEmpty && _items.first.noteId == toNoteId)) {
+          _items = await _loadChecklistItemsWeb(toNoteId);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ ChecklistProvider: Error cloning items: $e');
+    }
+  }
 }

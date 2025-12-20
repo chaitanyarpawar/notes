@@ -106,11 +106,13 @@ class NoteCard extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
+                  softWrap: true,
                   overflow: TextOverflow.ellipsis,
                 ),
 
-              // Content
+              // Content preview: show on home cards (title + first lines)
+              // Tighter constraints: checklist 3 lines, notes 5 lines
               if (note.content.isNotEmpty && note.content != 'Checklist') ...[
                 if (note.title.isNotEmpty) const SizedBox(height: 8),
                 Text(
@@ -121,7 +123,8 @@ class NoteCard extends StatelessWidget {
                     height: 1.4,
                     fontFamily: _isChecklist ? 'monospace' : null,
                   ),
-                  maxLines: _isChecklist ? 4 : 6,
+                  maxLines: _isChecklist ? 3 : 5,
+                  softWrap: true,
                   overflow: TextOverflow.ellipsis,
                 ),
               ] else if (note.content == 'Checklist') ...[
@@ -136,7 +139,7 @@ class NoteCard extends StatelessWidget {
                 ),
               ],
 
-              const Spacer(),
+              const SizedBox(height: 8),
 
               // Footer with date and category
               Row(

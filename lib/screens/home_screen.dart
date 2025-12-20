@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFFFF9500),
                     onPressed: _enterSelectionMode,
                   ),
+                  // Archived icon removed from app bar
                   IconButton(
                     icon: const Icon(Icons.account_circle_outlined, size: 26),
                     color: Colors.black54,
@@ -167,8 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               'Ideas',
                               'Important',
                             ];
-                            return SizedBox(
-                              height: 360,
+                            return SafeArea(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -197,6 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   ListView.builder(
                                     shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: categories.length,
                                     itemBuilder: (context, index) {
                                       final cat = categories[index];
@@ -240,8 +242,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const Divider(height: 16),
                                   ListTile(
-                                    leading: const Icon(Icons.clear_all),
-                                    title: const Text('Clear filters'),
+                                    leading: const Icon(Icons.clear_all,
+                                        color: Colors.redAccent),
+                                    title: const Text(
+                                      'Clear filters',
+                                      style: TextStyle(color: Colors.redAccent),
+                                    ),
                                     onTap: () {
                                       Navigator.pop(context);
                                       notesProvider.clearAllFilters();
@@ -249,6 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       setState(() {});
                                     },
                                   ),
+                                  const SizedBox(height: 8),
                                 ],
                               ),
                             );
@@ -370,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
           left: 16,
           right: 16,
           top: 0,
-          bottom: MediaQuery.of(context).viewPadding.bottom + 16,
+          bottom: MediaQuery.of(context).viewPadding.bottom + 80,
         ),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

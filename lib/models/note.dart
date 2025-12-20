@@ -35,6 +35,10 @@ class Note extends HiveObject {
   @HiveField(9)
   DateTime? reminderTime;
 
+  // Optional stored notification ID used for canceling scheduled reminders
+  @HiveField(10)
+  int? notificationId;
+
   Note({
     required this.id,
     required this.title,
@@ -46,6 +50,7 @@ class Note extends HiveObject {
     required this.updatedAt,
     this.category = 'Personal',
     this.reminderTime,
+    this.notificationId,
   });
 
   String get moodEmoji {
@@ -76,6 +81,9 @@ class Note extends HiveObject {
     DateTime? updatedAt,
     String? category,
     DateTime? reminderTime,
+    bool clearReminder = false,
+    int? notificationId,
+    bool clearNotificationId = false,
   }) {
     return Note(
       id: id ?? this.id,
@@ -87,7 +95,9 @@ class Note extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       category: category ?? this.category,
-      reminderTime: reminderTime ?? this.reminderTime,
+      reminderTime: clearReminder ? null : (reminderTime ?? this.reminderTime),
+      notificationId:
+          clearNotificationId ? null : (notificationId ?? this.notificationId),
     );
   }
 
@@ -103,6 +113,7 @@ class Note extends HiveObject {
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'category': category,
       'reminderTime': reminderTime?.millisecondsSinceEpoch,
+      'notificationId': notificationId,
     };
   }
 
@@ -120,6 +131,7 @@ class Note extends HiveObject {
       reminderTime: json['reminderTime'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['reminderTime'])
           : null,
+      notificationId: json['notificationId'] as int?,
     );
   }
 }

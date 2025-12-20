@@ -8,7 +8,7 @@ import 'providers/notes_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/checklist_provider.dart';
-import 'providers/speech_provider.dart';
+// import 'providers/speech_provider.dart';
 import 'services/hive_service.dart';
 import 'services/ad_service.dart';
 import 'screens/splash_screen.dart';
@@ -19,6 +19,7 @@ import 'screens/checklist_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'services/notification_service.dart';
+import 'services/navigation_service.dart';
 // import 'utils/app_theme.dart';
 
 void main() async {
@@ -61,7 +62,7 @@ class PebbleNoteApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => NotesProvider()),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
-        ChangeNotifierProvider(create: (_) => SpeechProvider()),
+        // Speech-to-text removed; no SpeechProvider
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -81,6 +82,7 @@ class PebbleNoteApp extends StatelessWidget {
 }
 
 final GoRouter _router = GoRouter(
+  navigatorKey: NavigationService.navigatorKey,
   initialLocation: '/',
   routes: [
     GoRoute(

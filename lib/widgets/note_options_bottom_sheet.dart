@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
+import '../providers/checklist_provider.dart';
 
 class NoteOptionsBottomSheet extends StatelessWidget {
   final Note note;
@@ -16,6 +17,10 @@ class NoteOptionsBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine if this note represents a checklist
+    final bool isChecklist = note.content.contains('☐') ||
+        note.content.contains('☑') ||
+        note.content == 'Checklist';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -38,7 +43,7 @@ class NoteOptionsBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Note preview
+          // Note header (title only)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -46,30 +51,19 @@ class NoteOptionsBottomSheet extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  note.title.isNotEmpty ? note.title : 'Untitled Note',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (note.content.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    note.content,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
+                Expanded(
+                  child: Text(
+                    note.title.isNotEmpty ? note.title : 'Untitled Note',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -83,7 +77,11 @@ class NoteOptionsBottomSheet extends StatelessWidget {
             title: 'Edit',
             onTap: () {
               Navigator.of(context).pop();
-              context.push('/note/${note.id}');
+              if (isChecklist) {
+                context.push('/checklist/${note.id}');
+              } else {
+                context.push('/note/${note.id}');
+              }
             },
           ),
 
@@ -109,31 +107,33 @@ class NoteOptionsBottomSheet extends StatelessWidget {
 
           _buildOption(
             context,
-            icon: note.isArchived ? Icons.unarchive : Icons.archive,
-            title: note.isArchived ? 'Unarchive' : 'Archive',
-            onTap: () async {
-              final notesProvider = context.read<NotesProvider>();
-              await notesProvider.toggleArchive(note.id);
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        note.isArchived ? 'Note unarchived' : 'Note archived'),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              }
-            },
-          ),
-
-          _buildOption(
-            context,
             icon: Icons.copy,
             title: 'Duplicate',
             onTap: () async {
               final notesProvider = context.read<NotesProvider>();
+              final checklistProvider = context.read<ChecklistProvider>();
               await notesProvider.duplicateNote(note.id);
+              // If checklist, clone its items to the new copy
+              try {
+                final isChecklist = note.content.contains('☐') ||
+                    note.content.contains('☑') ||
+                    note.content == 'Checklist';
+                if (isChecklist) {
+                  // Find the newly created note by title suffix
+                  final newTitle = '${note.title} (Copy)';
+                  final all = notesProvider.allNotes;
+                  final created = all.firstWhere(
+                    (n) =>
+                        n.title == newTitle &&
+                        n.updatedAt.isAfter(note.updatedAt),
+                    orElse: () => note,
+                  );
+                  if (created.id != note.id) {
+                    await checklistProvider.cloneChecklistItems(
+                        note.id, created.id);
+                  }
+                }
+              } catch (_) {}
               if (context.mounted) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(

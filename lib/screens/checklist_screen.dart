@@ -178,6 +178,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         });
         debugPrint(
             '✅ ChecklistScreen: Added new item, total items: ${checklistProvider.items.length}');
+        // Persist immediately so Home preview shows the new item
+        await _saveChecklist();
       }
     } else {
       debugPrint('⚠️ ChecklistScreen: Cannot add item - no current note');
@@ -205,8 +207,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     if (index < checklistProvider.items.length) {
       final item = checklistProvider.items[index];
       if (item.id != null && text != item.text) {
-        // Use provider method but without immediate notification to prevent text loss
+        // Update item text and mark as changed
         await checklistProvider.updateChecklistItemTextSilent(item.id!, text);
+        setState(() {
+          _hasUnsavedChanges = true;
+        });
+        // Persist change so Home preview updates promptly
+        await _saveChecklist();
       }
     }
   }
@@ -284,6 +291,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           color: _selectedColor,
           category: _selectedCategory,
           reminderTime: _reminderTime,
+          clearReminder: _reminderTime == null,
         );
         await notesProvider.updateNote(updatedNote);
         _currentNote = updatedNote;
@@ -326,14 +334,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       _isSaving = false;
     });
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Checklist saved'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    // Suppress auto-save SnackBar to avoid irritation on Home
 
     // Update last saved signature after successful save
     _lastSavedSignature = newSignature;
