@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import '../services/notification_service.dart';
 import '../services/ad_service.dart';
 // Removed intl dependency; using local month names
 

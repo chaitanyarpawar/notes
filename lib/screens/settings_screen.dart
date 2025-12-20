@@ -246,27 +246,6 @@ class SettingsTabContent extends StatelessWidget {
     );
   }
 
-  void _showPrivacyPolicy(BuildContext context) {
-    const policyText = '• Does not collect personal information\n'
-        '• Uses AdMob for advertisements (when ads are enabled)\n'
-        '• Does not share your notes with third parties\n\n'
-        'All your notes remain private and secure on your device.';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(child: Text(policyText)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showResetDialog(BuildContext context) {
     showDialog(
       context: context,

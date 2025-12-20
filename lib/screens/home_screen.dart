@@ -13,7 +13,6 @@ import '../widgets/search_bar.dart';
 import '../widgets/note_options_bottom_sheet.dart';
 import '../screens/settings_screen.dart';
 import '../utils/constants.dart';
-import '../widgets/app_brand_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -70,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Row(
                   children: [
                     if (!_isSelectionMode) ...[
@@ -139,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Search and filter section
           Container(
             color: const Color(0xFFF5F5F5),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
             child: Row(
               children: [
                 Expanded(
