@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800), // Faster animation
+      duration: const Duration(milliseconds: 500), // Quick animation
       vsync: this,
     );
 
@@ -30,15 +30,15 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
+      curve: const Interval(0.0, 0.8, curve: Curves.easeIn),
     ));
 
     _scaleAnimation = Tween<double>(
-      begin: 0.8,
+      begin: 0.9,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
     ));
 
     _animationController.forward();
@@ -46,7 +46,8 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 1000)); // Faster launch
+    await Future.delayed(
+        const Duration(milliseconds: 800)); // Minimal splash time
 
     if (mounted) {
       // Always navigate to home; onboarding disabled

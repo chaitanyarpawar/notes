@@ -11,7 +11,6 @@ import 'providers/checklist_provider.dart';
 // import 'providers/speech_provider.dart';
 import 'services/hive_service.dart';
 import 'services/ad_service.dart';
-import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/note_editor_screen.dart';
@@ -90,12 +89,12 @@ class PebbleNoteApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   navigatorKey: NavigationService.navigatorKey,
-  initialLocation: '/',
+  initialLocation: '/home',
   routes: [
     GoRoute(
       path: '/',
       name: 'splash',
-      builder: (context, state) => const SplashScreen(),
+      redirect: (context, state) => '/home',
     ),
     GoRoute(
       path: '/onboarding',
