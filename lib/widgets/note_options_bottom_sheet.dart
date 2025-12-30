@@ -44,13 +44,9 @@ class NoteOptionsBottomSheet extends StatelessWidget {
           ),
 
           // Note header (title only)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                vertical: 0), // Remove extra vertical space
             child: Row(
               children: [
                 Expanded(
@@ -67,8 +63,6 @@ class NoteOptionsBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-
-          const SizedBox(height: 20),
 
           // Options
           _buildOption(

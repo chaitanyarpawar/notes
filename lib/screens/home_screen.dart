@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Search and filter section
           Container(
             color: const Color(0xFFF5F5F5),
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Row(
               children: [
                 Expanded(
@@ -274,17 +274,17 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Padding(
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
+          left: 8,
+          right: 8,
           top: 0,
           bottom: MediaQuery.of(context).viewPadding.bottom + 80,
         ),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.75,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.85,
           ),
           itemCount: notes.length,
           itemBuilder: (context, index) {

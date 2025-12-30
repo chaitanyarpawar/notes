@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 800), // Faster animation
       vsync: this,
     );
 
@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.delayed(const Duration(milliseconds: 1000)); // Faster launch
 
     if (mounted) {
       // Always navigate to home; onboarding disabled
@@ -75,26 +75,12 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // App Icon/Logo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.note_alt_rounded,
-                        size: 64,
-                        color: Color(0xFFFF9500),
-                      ),
+                    // App Icon/Logo - Using new PebbleNotes icon
+                    Image.asset(
+                      'assets/icon/icon_home.png',
+                      width: 180,
+                      height: 180,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 24),
 

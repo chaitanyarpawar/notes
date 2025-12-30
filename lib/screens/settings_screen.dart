@@ -120,35 +120,39 @@ class SettingsTabContent extends StatelessWidget {
               onTap: () => _showResetDialog(context),
             ),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
 
             // App branding
             Center(
               child: Column(
                 children: [
-                  Icon(
-                    Icons.note_alt_rounded,
-                    size: 48,
-                    color:
-                        Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                  // New app icon from assets
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/icon/icon_home.png',
+                      width: 72,
+                      height: 72,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     AppConstants.appName,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Mood-Based Note Taking',
+                    'Capture Your Thoughts',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade600,
                     ),
                   ),
+                  const SizedBox(height: 32), // Space below text
                 ],
               ),
             ),

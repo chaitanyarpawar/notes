@@ -476,6 +476,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: LinedPaper(
                 padding: EdgeInsets.zero,
+                lineSpacing: 28.0, // Good spacing for writing
                 child: TextField(
                   controller: _contentController,
                   focusNode: _contentFocusNode,
@@ -491,7 +492,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   ),
                   style: const TextStyle(
                     fontSize: 16,
-                    height: 1.5,
+                    height: 1.75, // Adjusted to align with 28px line spacing
                     color: Colors.black87,
                   ),
                   maxLines: null,

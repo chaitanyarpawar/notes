@@ -37,13 +37,13 @@ class NoteCard extends StatelessWidget {
     final chipText = isDark ? Colors.white : Colors.black87;
 
     return Card(
-      elevation: isSelected ? 4 : 2,
+      elevation: isSelected ? 4 : 1,
       margin: EdgeInsets.zero,
       color: isSelected
           ? noteColor.withValues(alpha: isDark ? 0.5 : 0.9)
           : noteColor.withValues(alpha: isDark ? 0.3 : 0.8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         side: isSelected
             ? const BorderSide(color: Colors.blue, width: 2)
             : BorderSide.none,
@@ -51,9 +51,9 @@ class NoteCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -65,7 +65,7 @@ class NoteCard extends StatelessWidget {
                     children: [
                       if (isSelectionMode)
                         Container(
-                          margin: const EdgeInsets.only(right: 8),
+                          margin: const EdgeInsets.only(right: 4),
                           child: Checkbox(
                             value: isSelected,
                             onChanged: (_) => onTap(),
@@ -77,10 +77,10 @@ class NoteCard extends StatelessWidget {
                       // Checklist indicator
                       if (_isChecklist)
                         Container(
-                          margin: const EdgeInsets.only(right: 4),
+                          margin: const EdgeInsets.only(right: 2),
                           child: Icon(
                             Icons.checklist,
-                            size: 14,
+                            size: 12,
                             color: Colors.grey.shade600,
                           ),
                         ),
@@ -89,20 +89,20 @@ class NoteCard extends StatelessWidget {
                   if (note.isPinned && !isArchived)
                     Icon(
                       Icons.push_pin,
-                      size: 14,
+                      size: 12,
                       color: Colors.grey.shade600,
                     ),
                 ],
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
 
               // Title
               if (note.title.isNotEmpty)
                 Text(
                   note.title,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -112,7 +112,7 @@ class NoteCard extends StatelessWidget {
               // Content preview - use Expanded to fill available space and clip overflow
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.only(top: 2),
                   child: _buildContentPreview(),
                 ),
               ),
@@ -123,17 +123,17 @@ class NoteCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
+                      horizontal: 6,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: chipBg,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       note.category,
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w500,
                         color: chipText,
                       ),
@@ -152,9 +152,9 @@ class NoteCard extends StatelessWidget {
     if (note.content.isEmpty || note.content == 'Checklist') {
       if (note.content == 'Checklist') {
         return Text(
-          '☐ Add your first item',
+          '☐ Add item',
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             color: Colors.grey.shade500,
             fontStyle: FontStyle.italic,
           ),
@@ -168,12 +168,12 @@ class NoteCard extends StatelessWidget {
     return Text(
       note.content,
       style: TextStyle(
-        fontSize: _isChecklist ? 11 : 12,
+        fontSize: _isChecklist ? 10 : 11,
         color: Colors.grey.shade700,
-        height: 1.3,
+        height: 1.2,
         fontFamily: _isChecklist ? 'monospace' : null,
       ),
-      maxLines: _isChecklist ? 3 : 4,
+      maxLines: _isChecklist ? 3 : 3,
       overflow: TextOverflow.ellipsis,
     );
   }

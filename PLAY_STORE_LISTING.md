@@ -83,14 +83,11 @@ Productivity
 Everyone
 
 ## Contact Email
-chaitanyarpawar@gmail.com
+chaitanyapawar25@gmail.com
 
 ## Privacy Policy URL
-[You need to host the PRIVACY_POLICY.md file and provide the URL]
 Options:
-1. GitHub Pages: https://chaitanyarpawar.github.io/notes/privacy-policy
-2. Google Sites
-3. Your own website
+GitHub Pages: https://chaitanyarpawar.github.io/notes/privacy-policy
 
 ---
 
@@ -103,7 +100,6 @@ Options:
 5. **Calendar View** - Show the calendar with notes
 6. **Filter/Search** - Show the filter options
 7. **Settings** - Show the settings screen
-8. **Empty State** - Show the welcoming empty state
 
 **Screenshot Specifications:**
 - Phone: 1080 x 1920 pixels (minimum)
