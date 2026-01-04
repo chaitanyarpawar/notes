@@ -76,12 +76,15 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // App Icon/Logo - Using new PebbleNotes icon
-                    Image.asset(
-                      'assets/icon/icon_home.png',
-                      width: 180,
-                      height: 180,
-                      fit: BoxFit.contain,
+                    // App Icon/Logo - Using splash icon without white background
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(32),
+                      child: Image.asset(
+                        'assets/icon/icon_splash.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(height: 24),
 
