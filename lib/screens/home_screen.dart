@@ -380,36 +380,38 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Create New',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Create New',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.note_add, color: Color(0xFFFF9500)),
-                title: const Text('Note'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createNewNote(false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.checklist, color: Color(0xFFFF9500)),
-                title: const Text('Checklist'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _createNewNote(true);
-                },
-              ),
-            ],
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.note_add, color: Color(0xFFFF9500)),
+                  title: const Text('Note'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _createNewNote(false);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.checklist, color: Color(0xFFFF9500)),
+                  title: const Text('Checklist'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _createNewNote(true);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },

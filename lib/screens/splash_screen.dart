@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../utils/constants.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -64,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Colors.white, // White background
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
@@ -76,37 +75,23 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // App Icon/Logo - Using splash icon without white background
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: Image.asset(
-                        'assets/icon/icon_splash.png',
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.cover,
-                      ),
+                    // PebbleNotes Logo - no border, just the icon
+                    Image.asset(
+                      'assets/icon/icon_home.png',
+                      width: 300,
+                      height: 300,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 40),
 
-                    // App Name
-                    const Text(
-                      AppConstants.appName,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Tagline
+                    // Tagline with elegant Parisienne script font
                     Text(
                       'Capture Your Thoughts',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontWeight: FontWeight.w300,
+                      style: GoogleFonts.parisienne(
+                        fontSize: 32,
+                        color: const Color(0xFFFF9500),
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 1.5,
                       ),
                     ),
                   ],

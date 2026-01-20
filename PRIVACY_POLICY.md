@@ -1,19 +1,22 @@
-# Privacy Policy for PebbleNote
+# Privacy Policy for PebbleNotes
 
-**Last Updated: December 20, 2025**
+**Last Updated: January 20, 2026**
 
 ## Introduction
 
-Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application ("App").
+Welcome to PebbleNotes ("we," "our," or "us"). This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application ("App").
 
 ## Information We Collect
 
 ### Information Stored Locally
-- **Notes and Checklists**: All your notes, checklists, and reminders are stored locally on your device. We do not have access to this data.
-- **App Preferences**: Your settings and preferences are stored locally on your device.
+- **Notes and Checklists**: All your notes, checklists, and reminders are stored locally on your device using Hive database. We do not have access to this data.
+- **App Preferences**: Your settings, theme preferences, and app configurations are stored locally on your device using SharedPreferences.
 
 ### Information Collected Automatically
 - **Advertising Data**: We use Google AdMob to display advertisements. AdMob may collect device identifiers and usage data for advertising purposes. Please refer to [Google's Privacy Policy](https://policies.google.com/privacy) for more information.
+
+### Optional Features
+- **Reminders**: Notification data for reminders is processed locally on your device.
 
 ## How We Use Your Information
 
@@ -57,8 +60,8 @@ If you have any questions about this Privacy Policy, please contact us at:
 
 ## Consent
 
-By using PebbleNote, you consent to this Privacy Policy.
+By using PebbleNotes, you consent to this Privacy Policy.
 
 ---
 
-© 2025 PebbleNote. All rights reserved.
+© 2026 PebbleNotes. All rights reserved.
