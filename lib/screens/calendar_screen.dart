@@ -51,7 +51,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final daysInMonth =
         DateTime(firstOfMonth.year, firstOfMonth.month + 1, 0).day;
     final startWeekday = firstOfMonth.weekday; // 1=Mon ... 7=Sun
-    final leadingBlanks = startWeekday % 7;
+    final leadingBlanks = startWeekday - 1; // Mon=0, Tue=1, ..., Sun=6
     final totalCells = leadingBlanks + daysInMonth;
     final rows = (totalCells / 7).ceil();
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500), // Quick animation
+      duration: const Duration(milliseconds: 400), // Faster animation
       vsync: this,
     );
 
@@ -41,15 +42,17 @@ class _SplashScreenState extends State<SplashScreen>
     ));
 
     _animationController.forward();
-    _navigateToNext();
+    _initializeAndNavigate();
   }
 
-  Future<void> _navigateToNext() async {
-    await Future.delayed(
-        const Duration(milliseconds: 800)); // Minimal splash time
+  Future<void> _initializeAndNavigate() async {
+    // Request notification permission explicitly
+    await NotificationService.requestPermissions();
+
+    // Short delay for splash visibility
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
-      // Always navigate to home; onboarding disabled
       context.go('/home');
     }
   }
@@ -63,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // White background
+      backgroundColor: const Color(0xFFFF9500), // Orange background
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
@@ -75,11 +78,11 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // PebbleNotes Logo - no border, just the icon
+                    // PebbleNotes Logo - full coverage
                     Image.asset(
-                      'assets/icon/icon_home.png',
-                      width: 300,
-                      height: 300,
+                      'assets/icon/icon.png',
+                      width: MediaQuery.of(context).size.width * 0.55,
+                      height: MediaQuery.of(context).size.width * 0.55,
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 40),
@@ -89,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen>
                       'Capture Your Thoughts',
                       style: GoogleFonts.parisienne(
                         fontSize: 32,
-                        color: const Color(0xFFFF9500),
+                        color: Colors.white,
                         fontWeight: FontWeight.w400,
                         letterSpacing: 1.5,
                       ),

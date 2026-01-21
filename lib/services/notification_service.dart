@@ -127,6 +127,28 @@ class NotificationService {
     _initialized = true;
   }
 
+  /// Request notification permissions explicitly - call from splash screen
+  static Future<bool> requestPermissions() async {
+    try {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        // Request notification permission (Android 13+)
+        final granted = await androidPlugin.requestNotificationsPermission();
+        debugPrint('🔔 NotificationService: Permission granted: $granted');
+
+        // Request exact alarm permission (Android 12+)
+        await androidPlugin.requestExactAlarmsPermission();
+
+        return granted ?? false;
+      }
+      return true; // Non-Android platforms
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: Permission request failed: $e');
+      return false;
+    }
+  }
+
   static Future<void> scheduleReminder(Note note) async {
     if (note.reminderTime == null) {
       debugPrint(
