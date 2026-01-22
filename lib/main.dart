@@ -91,7 +91,7 @@ class PebbleNoteApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   navigatorKey: NavigationService.navigatorKey,
-  initialLocation: '/',
+  initialLocation: '/home',
   routes: [
     GoRoute(
       path: '/',

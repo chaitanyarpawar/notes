@@ -53,6 +53,9 @@ dev_dependencies:
   
   # Icon Generation
   flutter_launcher_icons: ^0.13.1
+  
+  # Native Splash Screen
+  flutter_native_splash: ^2.3.8
 
 flutter:
   uses-material-design: true
@@ -61,7 +64,7 @@ flutter:
   assets:
     - assets/icon/
 
-# Flutter Launcher Icons Configuration
+# Flutter Launcher Icons Configuration (App icon only - P logo)
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
@@ -78,3 +81,11 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/icon/icon_ic.png"
     icon_size: 48
+
+# Flutter Native Splash Configuration (Splash screen - with tagline)
+flutter_native_splash:
+  color: "#FF9500"
+  image: "assets/icon/splash_logo.png"
+  fullscreen: true
+  android_12:
+    color: "#FF9500"
