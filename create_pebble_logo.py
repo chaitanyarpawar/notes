@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Generate PebbleNotes icon with full orange background (no white corners)
-Recreates the stylized P logo with PebbleNotes text
+Generate PebbleNote icon with full orange background (no white corners)
+Recreates the stylized P logo with PebbleNote text
 """
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
 import math
 
-def create_pebblenotes_icon():
+def create_PebbleNote_icon():
     size = 1024
     orange = (255, 149, 0)  # Main orange
     dark_orange = (230, 120, 0)  # Darker orange for gradient effect
@@ -95,7 +95,7 @@ def create_pebblenotes_icon():
     ]
     draw.polygon(stem_points, fill=white)
     
-    # Draw "PebbleNotes" text
+    # Draw "PebbleNote" text
     try:
         font_path = None
         for fp in [
@@ -113,14 +113,14 @@ def create_pebblenotes_icon():
         else:
             font = ImageFont.load_default()
         
-        text = "PebbleNotes"
+        text = "PebbleNote"
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_x = (size - text_width) // 2
         text_y = size - 180
         
         draw.text((text_x, text_y), text, font=font, fill=white)
-        print(f"✅ Drew 'PebbleNotes' text")
+        print(f"✅ Drew 'PebbleNote' text")
         
     except Exception as e:
         print(f"Font error: {e}")
@@ -133,4 +133,4 @@ def create_pebblenotes_icon():
     return img
 
 if __name__ == "__main__":
-    create_pebblenotes_icon()
+    create_PebbleNote_icon()

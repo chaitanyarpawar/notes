@@ -1,10 +1,10 @@
-# Privacy Policy for PebbleNotes
+# Privacy Policy for PebbleNote
 
 **Last Updated: January 20, 2026**
 
 ## Introduction
 
-Welcome to PebbleNotes ("we," "our," or "us"). This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application ("App").
+Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how we collect, use, and protect your information when you use our mobile application ("App").
 
 ## Information We Collect
 
@@ -60,8 +60,8 @@ If you have any questions about this Privacy Policy, please contact us at:
 
 ## Consent
 
-By using PebbleNotes, you consent to this Privacy Policy.
+By using PebbleNote, you consent to this Privacy Policy.
 
 ---
 
-© 2026 PebbleNotes. All rights reserved.
+© 2026 PebbleNote. All rights reserved.

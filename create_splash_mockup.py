@@ -13,7 +13,7 @@ img = Image.new('RGB', (width, height), color='#FFFFFF')
 draw = ImageDraw.Draw(img)
 
 # Try to load the actual icon
-icon_path = 'assets/icon/icon_home.png'
+icon_path = 'assets/icon/icon.png'
 if os.path.exists(icon_path):
     icon = Image.open(icon_path)
     # Resize to 600x600 (300 * 2 for mockup scale) - NO BORDER
@@ -54,6 +54,6 @@ output_path = 'assets/icon/splash_screen_mockup.png'
 img.save(output_path, 'PNG')
 print(f"✅ Splash screen mockup saved to: {output_path}")
 print(f"   Size: {width}x{height}px")
-print(f"   Design: Centered PebbleNotes icon (220x220)")
+print(f"   Design: Centered PebbleNote icon (220x220)")
 print(f"   Background: White (#FFFFFF)")
 print(f"   Tagline: 'Capture Your Thoughts' (Orange)")

@@ -30,17 +30,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBannerAd();
+    // Defer ad loading to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBannerAd();
+    });
   }
 
   void _loadBannerAd() {
+    if (!mounted) return;
     final settingsProvider = context.read<SettingsProvider>();
     if (!settingsProvider.removeAds) {
       AdMobService.loadBannerAd(
         onAdLoaded: (loaded) {
-          setState(() {
-            _isBannerAdLoaded = loaded;
-          });
+          if (mounted) {
+            setState(() {
+              _isBannerAdLoaded = loaded;
+            });
+          }
         },
       );
     }

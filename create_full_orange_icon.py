@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a PebbleNotes icon with full orange background, "P" letter and "PebbleNotes" text
+Generate a PebbleNote icon with full orange background, "P" letter and "PebbleNote" text
 """
 from PIL import Image, ImageDraw, ImageFont
 import os
@@ -45,25 +45,25 @@ try:
 except Exception as e:
     print(f"Error drawing P: {e}")
 
-# Draw "PebbleNotes" below the P
+# Draw "PebbleNote" below the P
 try:
     if font_path:
         font_small = ImageFont.truetype(font_path, 100)
     else:
         font_small = ImageFont.load_default()
     
-    text_name = "PebbleNotes"
+    text_name = "PebbleNote"
     bbox2 = draw.textbbox((0, 0), text_name, font=font_small)
     w2 = bbox2[2] - bbox2[0]
     h2 = bbox2[3] - bbox2[1]
     x2 = (size - w2) // 2
     y2 = size // 2 + 200  # Below the P
     draw.text((x2, y2), text_name, font=font_small, fill=white)
-    print(f"✅ Drew 'PebbleNotes' at ({x2}, {y2})")
+    print(f"✅ Drew 'PebbleNote' at ({x2}, {y2})")
 except Exception as e:
-    print(f"Error drawing PebbleNotes: {e}")
+    print(f"Error drawing PebbleNote: {e}")
 
 # Save the icon
 os.makedirs("assets/icon", exist_ok=True)
 img.save("assets/icon/icon.png")
-print("✅ Generated icon with P and PebbleNotes: assets/icon/icon.png")
+print("✅ Generated icon with P and PebbleNote: assets/icon/icon.png")

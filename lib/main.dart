@@ -12,6 +12,7 @@ import 'providers/checklist_provider.dart';
 import 'services/hive_service.dart';
 import 'services/ad_service.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/note_editor_screen.dart';
 import 'screens/checklist_screen.dart';
@@ -24,23 +25,24 @@ import 'services/navigation_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Only await critical services - others can initialize in background
   try {
-    // Initialize services
+    // Critical: Hive must be ready before app starts
     await HiveService.init();
-    // Checklist now uses SharedPreferences-based storage; no heavy database init
-    await AdMobService.initialize();
-    // Initialize local notifications (channels, permissions where applicable)
-    await NotificationService.initialize();
 
-    // Set preferred orientations
+    // Set preferred orientations (fast, okay to await)
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
   } catch (e) {
-    // Log initialization error (print removed for production)
-    // Continue running the app even if some services fail to initialize
+    // Continue running the app even if some services fail
   }
+
+  // Non-blocking: Initialize these in background
+  AdMobService.initialize(); // Don't await - ads can load later
+  NotificationService
+      .initialize(); // Don't await - notifications can init later
 
   // Disable debug banner in debug mode
   if (kDebugMode) {
@@ -89,12 +91,12 @@ class PebbleNoteApp extends StatelessWidget {
 
 final GoRouter _router = GoRouter(
   navigatorKey: NavigationService.navigatorKey,
-  initialLocation: '/home',
+  initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
       name: 'splash',
-      redirect: (context, state) => '/home',
+      builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
       path: '/onboarding',

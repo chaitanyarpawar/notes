@@ -119,7 +119,7 @@ def create_feature_graphic(source_icon):
             tagline_font = title_font
         
         # App name - dark gray for modern look
-        text = "PebbleNotes"
+        text = "PebbleNote"
         text_color = (51, 51, 51)  # Dark gray #333333
         text_x = icon_x + icon_size + 80
         text_y = height // 2 - 55
