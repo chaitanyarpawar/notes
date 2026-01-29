@@ -20,8 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Show splash for 2 seconds then navigate
-    Future.delayed(const Duration(seconds: 2), () {
+    // Navigate to home immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _navigateToHome();
     });
   }
