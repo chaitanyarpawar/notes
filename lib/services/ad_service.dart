@@ -1,4 +1,5 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
 
 class AdMobService {
@@ -8,13 +9,24 @@ class AdMobService {
   static bool _isBannerLoaded = false;
   static bool _isInterstitialLoaded = false;
   static bool _isRewardedLoaded = false;
+  static bool _isInitialized = false;
 
   static Future<void> initialize() async {
-    await MobileAds.instance.initialize();
+    try {
+      await MobileAds.instance.initialize();
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('❌ AdMob initialization failed: $e');
+      _isInitialized = false;
+    }
   }
 
   // Banner Ad
   static void loadBannerAd({required Function(bool) onAdLoaded}) {
+    if (!_isInitialized) {
+      onAdLoaded(false);
+      return;
+    }
     _bannerAd = BannerAd(
       adUnitId: AppConstants.bannerAdUnitId,
       size: AdSize.banner,
@@ -38,6 +50,7 @@ class AdMobService {
 
   // Interstitial Ad
   static void loadInterstitialAd({Function? onAdClosed}) {
+    if (!_isInitialized) return;
     InterstitialAd.load(
       adUnitId: AppConstants.interstitialAdUnitId,
       request: const AdRequest(),
@@ -75,6 +88,7 @@ class AdMobService {
 
   // Rewarded Ad
   static void loadRewardedAd({Function? onRewarded}) {
+    if (!_isInitialized) return;
     RewardedAd.load(
       adUnitId: AppConstants.rewardedAdUnitId,
       request: const AdRequest(),
