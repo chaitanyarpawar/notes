@@ -362,360 +362,358 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         final completionPercentage = checklistProvider.completionPercentage;
 
         return PopScope(
-            canPop: false,
-            onPopInvokedWithResult: (didPop, result) async {
-              // Intercept all back actions to ensure save occurs
-              if (_hasUnsavedChanges || checklistProvider.items.isNotEmpty) {
-                await _saveChecklist();
-              }
-              if (!context.mounted) return;
-              context.pop();
-            },
-            child: Scaffold(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            // Intercept all back actions to ensure save occurs
+            if (_hasUnsavedChanges || checklistProvider.items.isNotEmpty) {
+              await _saveChecklist();
+            }
+            if (!context.mounted) return;
+            context.pop();
+          },
+          child: Scaffold(
+            backgroundColor: noteColor,
+            appBar: AppBar(
               backgroundColor: noteColor,
-              appBar: AppBar(
-                backgroundColor: noteColor,
-                elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black54),
-                  onPressed: () async {
-                    if (_hasUnsavedChanges ||
-                        checklistProvider.items.isNotEmpty) {
-                      await _saveChecklist();
-                    }
-                    if (!context.mounted) return;
-                    context.pop();
-                  },
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black54),
+                onPressed: () async {
+                  if (_hasUnsavedChanges ||
+                      checklistProvider.items.isNotEmpty) {
+                    await _saveChecklist();
+                  }
+                  if (!context.mounted) return;
+                  context.pop();
+                },
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, color: Colors.black54),
+                  onPressed: _shareChecklist,
                 ),
-                actions: [
+                if (_currentNote != null)
                   IconButton(
                     icon:
-                        const Icon(Icons.share_outlined, color: Colors.black54),
-                    onPressed: _shareChecklist,
+                        const Icon(Icons.delete_outline, color: Colors.black54),
+                    onPressed: _deleteChecklist,
                   ),
-                  if (_currentNote != null)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline,
-                          color: Colors.black54),
-                      onPressed: _deleteChecklist,
-                    ),
-                ],
-              ),
-              body: Column(
-                children: [
-                  // Title
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: TextField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Checklist Title',
-                        hintStyle: TextStyle(
-                          fontSize: 24,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: const TextStyle(
+              ],
+            ),
+            body: Column(
+              children: [
+                // Title
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Checklist Title',
+                      hintStyle: TextStyle(
                         fontSize: 24,
+                        color: Colors.black54,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
                       ),
-                      maxLines: 1,
                     ),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
                   ),
+                ),
 
-                  // Reminder row
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    child: Row(
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _pickReminder,
-                          icon: const Icon(Icons.alarm),
-                          label: const Text('Set Reminder'),
+                // Reminder row
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _pickReminder,
+                        icon: const Icon(Icons.alarm),
+                        label: const Text('Set Reminder'),
+                      ),
+                      const SizedBox(width: 12),
+                      if (_reminderTime != null)
+                        Flexible(
+                          child: Text(
+                            _formatReminder(_reminderTime!),
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.black54),
+                          ),
                         ),
-                        const SizedBox(width: 12),
-                        if (_reminderTime != null)
-                          Flexible(
-                            child: Text(
-                              _formatReminder(_reminderTime!),
-                              overflow: TextOverflow.ellipsis,
+                      if (_reminderTime != null) ...[
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          onPressed: _clearReminder,
+                          icon: const Icon(Icons.close, size: 16),
+                          label: const Text('Clear'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // Progress indicator
+                if (items.isNotEmpty && completedCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '$completedCount of $totalCount completed',
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.black54),
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
                             ),
-                          ),
-                        if (_reminderTime != null) ...[
-                          const SizedBox(width: 8),
-                          TextButton.icon(
-                            onPressed: _clearReminder,
-                            icon: const Icon(Icons.close, size: 16),
-                            label: const Text('Clear'),
-                            style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                            Text(
+                              '${(completionPercentage * 100).round()}%',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        LinearProgressIndicator(
+                          value: completionPercentage,
+                          backgroundColor: Colors.black.withValues(alpha: 0.1),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF2196F3)),
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
 
-                  // Progress indicator
-                  if (items.isNotEmpty && completedCount > 0)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '$completedCount of $totalCount completed',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              Text(
-                                '${(completionPercentage * 100).round()}%',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          LinearProgressIndicator(
-                            value: completionPercentage,
-                            backgroundColor:
-                                Colors.black.withValues(alpha: 0.1),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF2196F3)),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-
-                  // Checklist items
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: items.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == items.length) {
-                          // Add item button
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: GestureDetector(
-                              onTap: _addNewItem,
-                              child: const Row(
-                                children: [
-                                  Icon(
-                                    Icons.add,
-                                    color: Colors.black54,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Add item',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        final item = items[index];
+                // Checklist items
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: items.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == items.length) {
+                        // Add item button
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: [
-                              // Checkbox
-                              GestureDetector(
-                                onTap: () => _toggleItemCompletion(index),
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: item.isChecked
-                                        ? const Color(0xFF2196F3)
-                                        : Colors.transparent,
-                                    border: Border.all(
-                                      color: item.isChecked
-                                          ? const Color(0xFF2196F3)
-                                          : Colors.black26,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: GestureDetector(
+                            onTap: _addNewItem,
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.add,
+                                  color: Colors.black54,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Add item',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
                                   ),
-                                  child: item.isChecked
-                                      ? const Icon(
-                                          Icons.check,
-                                          color: Colors.white,
-                                          size: 16,
-                                        )
-                                      : null,
                                 ),
-                              ),
-
-                              const SizedBox(width: 12),
-
-                              // Text field
-                              Expanded(
-                                child: index < _itemControllers.length
-                                    ? TextField(
-                                        controller: _itemControllers[index],
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: 'Enter item',
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                        autofocus: index == _autofocusIndex,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.black87,
-                                          decoration: item.isChecked
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                        ),
-                                        onChanged: (text) {
-                                          _updateItemText(index, text);
-                                          _onTextChanged();
-                                        },
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                              // Delete button (always available)
-                              IconButton(
-                                onPressed: () => _removeItem(index),
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.black26,
-                                  size: 18,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 32,
-                                  minHeight: 32,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                      }
 
-              // Bottom bar
-              bottomNavigationBar: SafeArea(
-                top: false,
-                bottom: true,
-                child: Container(
-                  color: Colors.white,
-                  padding: EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    top: 12,
-                    bottom: MediaQuery.of(context).viewPadding.bottom + 12,
-                  ),
-                  child: Row(
-                    children: [
-                      // Color picker button
-                      GestureDetector(
-                        onTap: _showColorPicker,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.palette_outlined,
-                            color: Colors.black54,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // Category button
-                      GestureDetector(
-                        onTap: _showCategoryPicker,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.label_outline,
-                            color: Colors.black54,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Save button
-                      GestureDetector(
-                        onTap: _isSaving
-                            ? null
-                            : () async {
-                                if (!_isSaving) {
-                                  setState(() {
-                                    _isSaving = true;
-                                  });
-                                  final navigator = Navigator.of(context);
-                                  await _saveChecklist();
-                                  if (mounted) {
-                                    navigator.pop();
-                                  }
-                                }
-                              },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2196F3),
-                            borderRadius: BorderRadius.circular(25),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                      final item = items[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            // Checkbox
+                            GestureDetector(
+                              onTap: () => _toggleItemCompletion(index),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: item.isChecked
+                                      ? const Color(0xFF2196F3)
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: item.isChecked
+                                        ? const Color(0xFF2196F3)
+                                        : Colors.black26,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: item.isChecked
+                                    ? const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 16,
+                                      )
+                                    : null,
                               ),
-                            ],
-                          ),
-                          child: const Text(
-                            'Save',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
+
+                            const SizedBox(width: 12),
+
+                            // Text field
+                            Expanded(
+                              child: index < _itemControllers.length
+                                  ? TextField(
+                                      controller: _itemControllers[index],
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: 'Enter item',
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      autofocus: index == _autofocusIndex,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black87,
+                                        decoration: item.isChecked
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
+                                      onChanged: (text) {
+                                        _updateItemText(index, text);
+                                        _onTextChanged();
+                                      },
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                            // Delete button (always available)
+                            IconButton(
+                              onPressed: () => _removeItem(index),
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.black26,
+                                size: 18,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
+              ],
+            ),
+
+            // Bottom bar
+            bottomNavigationBar: SafeArea(
+              top: false,
+              bottom: true,
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 12,
+                  bottom: MediaQuery.of(context).viewPadding.bottom + 12,
+                ),
+                child: Row(
+                  children: [
+                    // Color picker button
+                    GestureDetector(
+                      onTap: _showColorPicker,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.palette_outlined,
+                          color: Colors.black54,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    // Category button
+                    GestureDetector(
+                      onTap: _showCategoryPicker,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.label_outline,
+                          color: Colors.black54,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Save button
+                    GestureDetector(
+                      onTap: _isSaving
+                          ? null
+                          : () async {
+                              if (!_isSaving) {
+                                setState(() {
+                                  _isSaving = true;
+                                });
+                                final navigator = Navigator.of(context);
+                                await _saveChecklist();
+                                if (mounted) {
+                                  navigator.pop();
+                                }
+                              }
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2196F3),
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ));
+            ),
+          ),
+        );
       },
     );
   }

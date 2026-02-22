@@ -1,10 +1,15 @@
 # PebbleNote - Play Store Listing
+## Production Launch - v1.0.4 (Build 5)
+
+---
 
 ## App Name
 PebbleNote
 
 ## Short Description (Max 80 characters)
 Capture your thoughts with ease. Simple notes, checklists & reminders.
+
+**Character Count:** 67/80 ✅
 
 ## Full Description (Max 4000 characters)
 
@@ -114,8 +119,86 @@ GitHub Pages: https://chaitanyarpawar.github.io/notes/privacy-policy
 |-------|-------|
 | App Name | PebbleNote |
 | Package Name | com.example.pebblenote |
+| Version | 1.0.4 (Build 5) |
 | Category | Productivity |
 | Content Rating | Everyone |
 | Price | Free (with ads) |
 | In-app Purchases | No |
-| Contains Ads | Yes |
+| Contains Ads | Yes (Unity Ads) |
+| Permissions | Storage, Notifications |
+
+---
+
+## What's New (v1.0.4) - For Play Store "Release Notes"
+
+**Copy this into Play Store Console → Release → Production → Release Notes:**
+
+```
+✨ First Production Release!
+
+🎉 Welcome to PebbleNote - your simple note-taking companion!
+
+What you can do:
+• Create beautiful notes with colors
+• Set reminders to never forget
+• Make checklists for your tasks
+• View notes in calendar
+• Search and filter easily
+• Enjoy dark/light themes
+
+📱 Privacy-focused, offline-first
+🎨 Clean, modern design
+⚡ Fast and lightweight
+
+Thank you for trying PebbleNote! We'd love your feedback.
+```
+
+---
+
+## Assets Checklist
+
+- [x] App Icon (512x512) - `assets/playstore/app_icon_512.png`
+- [x] Feature Graphic (1024x500) - `assets/playstore/feature_graphic.png`
+- [ ] Screenshots (1080x1920) - Need to capture (see SCREENSHOT_GUIDE.md)
+- [x] Privacy Policy - https://chaitanyarpawar.github.io/notes/privacy-policy
+- [x] Release AAB - `build/app/outputs/bundle/release/app-release.aab`
+
+---
+
+## Pre-Launch Checklist
+
+Before submitting to production:
+
+### Technical
+- [x] Release AAB built and signed
+- [x] Version code incremented (1.0.4+5)
+- [x] Unity Ads integrated (Game ID: 6046939)
+- [x] Test mode disabled
+- [x] All permissions declared in manifest
+- [x] ProGuard rules configured
+- [x] Release tested on real device
+
+### Content
+- [ ] Screenshots captured (2-8 images)
+- [ ] Feature graphic uploaded
+- [ ] Short description finalized
+- [ ] Full description reviewed
+- [ ] Release notes written
+- [ ] Contact email verified
+- [ ] Privacy policy accessible
+
+### Play Console
+- [ ] App details filled
+- [ ] Content rating completed
+- [ ] Target audience set
+- [ ] Ads declaration: Yes
+- [ ] Data safety section completed
+- [ ] Pricing: Free
+- [ ] Countries selected (or worldwide)
+
+### Post-Launch
+- [ ] Monitor crash reports (first 24h)
+- [ ] Respond to first reviews
+- [ ] Check ad revenue (Unity Dashboard)
+- [ ] Prepare hotfix if needed
+- [ ] Plan v1.1.0 features based on feedback

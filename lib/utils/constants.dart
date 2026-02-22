@@ -20,6 +20,10 @@ class AppConstants {
   static const String rewardedAdUnitId =
       'ca-app-pub-3940256099942544/5224354917';
 
+  // Unity Ads Configuration
+  static const String unityGameIdAndroid = '6046939';
+  static const String unityBannerPlacementId = 'Banner_Android';
+
   // Animation Durations
   static const Duration shortAnimation = Duration(milliseconds: 200);
   static const Duration mediumAnimation = Duration(milliseconds: 300);

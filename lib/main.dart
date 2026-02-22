@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:unity_ads_plugin/unity_ads_plugin.dart';
 
 import 'providers/notes_provider.dart';
 import 'providers/theme_provider.dart';
@@ -20,6 +22,7 @@ import 'screens/settings_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'services/notification_service.dart';
 import 'services/navigation_service.dart';
+import 'utils/constants.dart';
 // import 'utils/app_theme.dart';
 
 void main() async {
@@ -43,6 +46,26 @@ void main() async {
   AdMobService.initialize(); // Don't await - ads can load later
   NotificationService
       .initialize(); // Don't await - notifications can init later
+
+  // Initialize Google AdMob with test ads
+  debugPrint('🎉 Initializing AdMob for test ads...');
+  MobileAds.instance.initialize();
+
+  debugPrint('✅ AdMob initialized successfully');
+
+  // Initialize Unity Ads for production
+  debugPrint('🚀 Initializing Unity Ads...');
+  await UnityAds.init(
+    gameId:
+        AppConstants.unityGameIdAndroid, // Use Android Game ID from constants
+    testMode: false, // Set to false for production
+    onComplete: () {
+      debugPrint('✅ Unity Ads initialized successfully');
+    },
+    onFailed: (error, message) {
+      debugPrint('❌ Unity Ads initialization failed: $message');
+    },
+  );
 
   // Disable debug banner in debug mode
   if (kDebugMode) {

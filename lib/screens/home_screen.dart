@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 // import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
-import '../providers/settings_provider.dart';
-import '../services/ad_service.dart';
 import '../widgets/note_card.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/note_options_bottom_sheet.dart';
+import '../widgets/admob_banner_ad.dart';
 import '../screens/settings_screen.dart';
 import '../utils/constants.dart';
 
@@ -22,35 +20,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isBannerAdLoaded = false;
   bool _isSelectionMode = false;
   final Set<String> _selectedNoteIds = <String>{};
   int _currentTabIndex = 0; // 0: Notes, 1: Calendar
-
-  @override
-  void initState() {
-    super.initState();
-    // Defer ad loading to after first frame renders
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadBannerAd();
-    });
-  }
-
-  void _loadBannerAd() {
-    if (!mounted) return;
-    final settingsProvider = context.read<SettingsProvider>();
-    if (!settingsProvider.removeAds) {
-      AdMobService.loadBannerAd(
-        onAdLoaded: (loaded) {
-          if (mounted) {
-            setState(() {
-              _isBannerAdLoaded = loaded;
-            });
-          }
-        },
-      );
-    }
-  }
 
   @override
   void dispose() {
@@ -189,20 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Show test ads above the navigation bar
-          SizedBox(
-            height: 48,
-            child: (_isBannerAdLoaded && AdMobService.bannerAd != null)
-                ? Center(child: AdWidget(ad: AdMobService.bannerAd!))
-                : Container(
-                    color: Colors.white,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'space for ads',
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                  ),
-          ),
+          // Unity Banner Ad
+          const AdMobBannerAdWidget(),
           BottomNavigationBar(
             currentIndex: _currentTabIndex,
             onTap: (index) {
@@ -409,7 +369,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.checklist, color: Color(0xFFFF9500)),
+                  leading:
+                      const Icon(Icons.checklist, color: Color(0xFFFF9500)),
                   title: const Text('Checklist'),
                   onTap: () {
                     Navigator.pop(context);

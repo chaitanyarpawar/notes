@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to home immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _navigateToHome();
     });

@@ -107,14 +107,14 @@ Use emoji prefixes for log filtering:
 - `❌` - Errors
 - `⚠️` - Warnings
 
-### AdMob Integration
-Test ad unit IDs are in `lib/utils/constants.dart`. Replace with production IDs before release. Check `SettingsProvider.removeAds` before showing ads.
+### Ads Integration
+Unity Ads is the primary ad network (Game ID: 6046939). Check `SettingsProvider.removeAds` before showing ads.
 
 ## External Dependencies
 - **Hive**: Local NoSQL storage for notes
 - **SharedPreferences**: Lightweight key-value storage for settings/checklists
 - **flutter_local_notifications**: Reminder scheduling with timezone support
-- **google_mobile_ads**: Monetization (banner, interstitial, rewarded)
+- **unity_ads_plugin**: Monetization (banner, interstitial, rewarded)
 - **go_router**: Declarative routing with deep linking support
 
 ## Common Tasks
