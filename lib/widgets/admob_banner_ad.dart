@@ -1,45 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../utils/constants.dart';
 
-class AdMobBannerAdWidget extends StatefulWidget {
-  const AdMobBannerAdWidget({super.key});
+/// AdMob banner ad widget.
+/// - Debug builds  → Google test ad unit (safe, never charged)
+/// - Release builds → Real ad unit (ca-app-pub-4293190177975182/9178907748)
+class AdMobBannerWidget extends StatefulWidget {
+  const AdMobBannerWidget({super.key});
 
   @override
-  State<AdMobBannerAdWidget> createState() => _AdMobBannerAdWidgetState();
+  State<AdMobBannerWidget> createState() => _AdMobBannerWidgetState();
 }
 
-class _AdMobBannerAdWidgetState extends State<AdMobBannerAdWidget> {
+class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
 
-  // Test banner ad unit ID for Android
-  final String _adUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const int _maxRetries = 3;
+  int _retryCount = 0;
 
   @override
   void initState() {
     super.initState();
-    debugPrint('🚀 Loading AdMob test banner ad');
+    debugPrint('🚀 Loading AdMob banner (${AppConstants.bannerAdUnitId})');
     _loadAd();
   }
 
   void _loadAd() {
-    _bannerAd = BannerAd(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
+    final ad = BannerAd(
+      adUnitId: AppConstants.bannerAdUnitId,
       size: AdSize.banner,
+      request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          debugPrint('✅ AdMob Banner loaded successfully');
+          if (!mounted) return;
           setState(() {
+            _bannerAd = ad as BannerAd;
             _isLoaded = true;
           });
+          debugPrint('✅ AdMob banner loaded');
         },
-        onAdFailedToLoad: (ad, err) {
-          debugPrint('❌ AdMob Banner failed to load: ${err.message}');
+        onAdFailedToLoad: (ad, error) {
           ad.dispose();
+          debugPrint(
+              '❌ AdMob banner failed (attempt $_retryCount): ${error.message}');
+          if (_retryCount < _maxRetries && mounted) {
+            _retryCount++;
+            // Back-off: 5s, 10s, 15s
+            Future.delayed(Duration(seconds: _retryCount * 5), () {
+              if (mounted) _loadAd();
+            });
+          }
         },
       ),
-    )..load();
+    );
+    ad.load();
   }
 
   @override
@@ -50,46 +65,23 @@ class _AdMobBannerAdWidgetState extends State<AdMobBannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_bannerAd != null && _isLoaded) {
-      return Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: AdWidget(ad: _bannerAd!),
-      );
-    } else {
-      return Container(
-        height: 60,
-        color: Colors.grey.withValues(alpha: 0.1),
-        child: const Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Loading AdMob Banner...',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+    if (!_isLoaded || _bannerAd == null) return const SizedBox.shrink();
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
           ),
-        ),
-      );
-    }
+        ],
+      ),
+      child: SizedBox(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      ),
+    );
   }
 }

@@ -36,6 +36,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const bgColor = Color(0xFFEEF2FB);
+    const brandOrange = Color(0xFFFF9500);
+
     // Static UI matching native splash - no animations
     return Scaffold(
       backgroundColor: const Color(0xFFFF9500), // Orange background

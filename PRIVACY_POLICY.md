@@ -1,6 +1,6 @@
 # Privacy Policy for PebbleNote
 
-**Last Updated: February 16, 2026**
+**Last Updated: February 24, 2026**
 
 ## Introduction
 
@@ -9,19 +9,26 @@ Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how w
 ## Information We Collect
 
 ### Information Stored Locally
-- **Notes and Checklists**: All your notes, checklists, and reminders are stored locally on your device using Hive database. We do not have access to this data.
+- **Notes, Checklists, and Sheet Templates**: All your notes, checklists, sheet templates with calculations, and reminders are stored locally on your device using Hive database. We do not have access to this data.
 - **App Preferences**: Your settings, theme preferences, and app configurations are stored locally on your device using SharedPreferences.
+- **Exported Files**: When you export notes as PDF or images, files are created locally on your device. We do not access or store these exports.
 
 ### Information Collected Automatically
 - **Advertising Data**: We use Unity Ads to display advertisements. Unity Ads may collect device identifiers, IP address, and usage data for advertising purposes. Please refer to [Unity's Privacy Policy](https://unity.com/legal/privacy-policy) for more information.
 
 ### Optional Features
 - **Reminders**: Notification data for reminders is processed locally on your device.
+- **PDF Export**: Convert notes to PDF format locally on your device. Files include a "PebbleNote" watermark.
+- **Image Sharing**: Share notes as images using your device's native share system. Images are created locally and shared directly to your chosen app.
+- **Calendar View**: View notes by date. All calendar data is processed locally.
+- **File Sharing**: When you use share features, your device's native sharing system handles the data transfer to your selected apps.
 
 ## How We Use Your Information
 
-- **Local Storage**: Your notes and settings remain on your device and are never transmitted to our servers.
+- **Local Storage**: Your notes, sheet templates, and settings remain on your device and are never transmitted to our servers.
+- **Local Processing**: All features including sheet calculations, PDF generation, image creation, and calendar views are performed locally on your device.
 - **Advertisements**: We display ads through Unity Ads to support the free version of the app.
+- **File Sharing**: When you export or share files (PDF/images), they are processed locally and shared through your device's native sharing system to apps you choose.
 
 ## Data Security
 

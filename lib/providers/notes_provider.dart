@@ -97,6 +97,7 @@ class NotesProvider extends ChangeNotifier {
   Future<Note> createNote({
     String title = '',
     String content = '',
+    String? contentDelta,
     NoteColor color = NoteColor.yellow,
     String category = 'Personal',
     DateTime? reminderTime,
@@ -106,6 +107,7 @@ class NotesProvider extends ChangeNotifier {
       id: _uuid.v4(),
       title: title,
       content: content,
+      contentDelta: contentDelta,
       color: color,
       createdAt: now,
       updatedAt: now,
@@ -370,6 +372,33 @@ class NotesProvider extends ChangeNotifier {
       }
     }
     return null;
+  }
+
+  /// Restore notes from Google Drive backup
+  ///
+  /// This replaces ALL local notes with the backup notes.
+  /// Used when user clicks "Restore Backup" button.
+  Future<void> restoreFromBackup(List<Note> backupNotes) async {
+    try {
+      debugPrint('🔄 Restoring ${backupNotes.length} notes from backup...');
+
+      // Clear all existing notes
+      await _notesBox.clear();
+      debugPrint('🗑️ Cleared all local notes');
+
+      // Add all backup notes
+      for (final note in backupNotes) {
+        await _notesBox.put(note.id, note);
+      }
+
+      debugPrint('✅ Restored ${backupNotes.length} notes successfully');
+
+      // Reload notes
+      _loadNotes();
+    } catch (e) {
+      debugPrint('❌ Error restoring from backup: $e');
+      rethrow;
+    }
   }
 
   @override

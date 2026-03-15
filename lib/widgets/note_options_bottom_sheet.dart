@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/note.dart';
+import '../models/sheet_template.dart';
 import '../providers/notes_provider.dart';
 import '../providers/checklist_provider.dart';
 
@@ -147,8 +148,53 @@ class NoteOptionsBottomSheet extends StatelessWidget {
             onTap: () async {
               final title = note.title.isNotEmpty ? note.title : 'Note';
               final content = note.content.trim();
-              final text = content.isEmpty ? title : '$title\n\n$content';
-              await Share.share(text, subject: title);
+
+              // Check if this is a sheet template
+              if (content.startsWith('__SHEET_DATA__:')) {
+                try {
+                  // Parse sheet data
+                  final jsonString =
+                      content.substring('__SHEET_DATA__:'.length);
+                  final sheetData = SheetData.fromJsonString(jsonString);
+
+                  // Format as text
+                  final buffer = StringBuffer();
+                  buffer.writeln(title);
+                  buffer.writeln('=' * 40);
+                  buffer.writeln();
+
+                  // Column headers
+                  buffer.writeln(
+                      sheetData.columns.map((c) => c.name).join(' | '));
+                  buffer.writeln('-' * 40);
+
+                  // Rows
+                  for (var row in sheetData.rows) {
+                    final values = sheetData.columns
+                        .map((col) => row.cells[col.id] ?? '')
+                        .toList();
+                    buffer.writeln(values.join(' | '));
+                  }
+
+                  // Total
+                  if (sheetData.hasTotal) {
+                    buffer.writeln('-' * 40);
+                    buffer.writeln(
+                        '${sheetData.totalLabel ?? 'Total'}: ${sheetData.currencySymbol ?? '₹'}${sheetData.calculateTotal().toStringAsFixed(2)}');
+                  }
+
+                  await Share.share(buffer.toString(), subject: title);
+                } catch (e) {
+                  // If parsing fails, share as regular text
+                  final text = content.isEmpty ? title : '$title\n\n$content';
+                  await Share.share(text, subject: title);
+                }
+              } else {
+                // Regular note sharing
+                final text = content.isEmpty ? title : '$title\n\n$content';
+                await Share.share(text, subject: title);
+              }
+
               if (context.mounted) Navigator.of(context).pop();
             },
           ),

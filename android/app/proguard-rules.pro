@@ -12,6 +12,26 @@
 # Keep Flutter registrant
 -keep class **.GeneratedPluginRegistrant { *; }
 
+# Flutter Local Notifications - CRITICAL FOR REMINDERS
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-keep class com.dexterous.** { *; }
+-dontwarn com.dexterous.flutterlocalnotifications.**
+
+# Keep BroadcastReceivers for scheduled notifications
+-keep class * extends android.content.BroadcastReceiver
+-keep class com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver { *; }
+-keep class com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver { *; }
+
+# Keep AlarmManager and scheduling classes
+-keep class android.app.AlarmManager { *; }
+-keep class android.app.PendingIntent { *; }
+-keep class androidx.core.app.AlarmManagerCompat { *; }
+
+# Keep notification models and data classes
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
 # Google Mobile Ads
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.**

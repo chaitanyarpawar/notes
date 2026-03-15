@@ -4,12 +4,16 @@ import 'package:go_router/go_router.dart';
 // import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../models/note.dart';
+import '../models/note_template.dart';
 import '../providers/notes_provider.dart';
+import '../providers/templates_provider.dart';
 import '../widgets/note_card.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/note_options_bottom_sheet.dart';
 import '../widgets/admob_banner_ad.dart';
 import '../screens/settings_screen.dart';
+import '../screens/templates_tab.dart';
+import '../screens/calendar_screen.dart';
 import '../utils/constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isSelectionMode = false;
   final Set<String> _selectedNoteIds = <String>{};
-  int _currentTabIndex = 0; // 0: Notes, 1: Calendar
+  int _currentTabIndex = 0; // 0: Notes, 1: Calendar, 2: Templates
 
   @override
   void dispose() {
@@ -35,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          // Orange header section similar to HighwayMate
+          // Orange header section
           Container(
             decoration: const BoxDecoration(
               color: Color(0xFFFF9500),
@@ -113,77 +117,60 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Search and filter section
-          Container(
-            color: const Color(0xFFF5F5F5),
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomSearchBar(
-                    onChanged: (query) {
-                      final notesProvider = context.read<NotesProvider>();
-                      notesProvider.searchNotes(query);
-                      setState(() {});
-                    },
-                    onClear: () {
-                      final notesProvider = context.read<NotesProvider>();
-                      notesProvider.clearSearch();
-                      setState(() {});
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 40,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Unified filters in one place
-                      _showFilterBottomSheet();
-                    },
-                    icon: const Icon(Icons.filter_list),
-                    label: const Text('Filter'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
+          // Search and filter section (only show on Notes tab)
+          if (_currentTabIndex == 0)
+            Container(
+              color: const Color(0xFFF5F5F5),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CustomSearchBar(
+                      onChanged: (query) {
+                        final notesProvider = context.read<NotesProvider>();
+                        notesProvider.searchNotes(query);
+                        setState(() {});
+                      },
+                      onClear: () {
+                        final notesProvider = context.read<NotesProvider>();
+                        notesProvider.clearSearch();
+                        setState(() {});
+                      },
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    height: 40,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // Unified filters in one place
+                        _showFilterBottomSheet();
+                      },
+                      icon: const Icon(Icons.filter_list),
+                      label: const Text('Filter'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Notes List
+          // Content based on selected tab
           Expanded(
-            child: _buildNotesTab(),
+            child: _buildCurrentTabContent(),
           ),
         ],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Unity Banner Ad
-          const AdMobBannerAdWidget(),
+          // AdMob Banner Ad
+          const AdMobBannerWidget(),
           BottomNavigationBar(
             currentIndex: _currentTabIndex,
             onTap: (index) {
-              // Keep Notes tab highlighted; open Calendar as a separate route
-              if (index == 1) {
-                // Immediately ensure Notes remains highlighted
-                if (_currentTabIndex != 0) {
-                  setState(() {
-                    _currentTabIndex = 0;
-                  });
-                }
-                try {
-                  GoRouter.of(context).push('/calendar');
-                } catch (_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Calendar view coming soon')),
-                  );
-                }
-                // Do not change _currentTabIndex so Notes remains highlighted
-                return;
-              }
               setState(() {
                 _currentTabIndex = index;
               });
@@ -197,26 +184,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(Icons.calendar_today),
                 label: 'Calendar',
               ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.description),
+                label: 'Templates',
+              ),
             ],
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: _showCreateNoteOptions,
-            backgroundColor: const Color(0xFFFF9500),
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
+      floatingActionButton: _currentTabIndex == 0
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  onPressed: _showCreateNoteOptions,
+                  backgroundColor: const Color(0xFFFF9500),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
+  }
+
+  Widget _buildCurrentTabContent() {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildNotesTab();
+      case 1:
+        return _buildCalendarTab();
+      case 2:
+        return const TemplatesTab();
+      default:
+        return _buildNotesTab();
+    }
+  }
+
+  Widget _buildCalendarTab() {
+    return const CalendarScreen();
   }
 
   Widget _buildNotesTab() {
@@ -338,8 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showCreateNoteOptions() {
-    // Default category handled in _createNewNote
-
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -377,8 +385,120 @@ class _HomeScreenState extends State<HomeScreen> {
                     _createNewNote(true);
                   },
                 ),
+                const Divider(),
+                ListTile(
+                  leading:
+                      const Icon(Icons.auto_awesome, color: Color(0xFFFF9500)),
+                  title: const Text('Use Template'),
+                  subtitle: const Text('Start from a template'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showTemplateSelector();
+                  },
+                ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTemplateSelector() {
+    final templatesProvider = context.read<TemplatesProvider>();
+    final allTemplates = templatesProvider.allTemplates;
+
+    if (allTemplates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No templates available'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            minChildSize: 0.4,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (context, scrollController) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Select Template',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: allTemplates.length,
+                        itemBuilder: (context, index) {
+                          final template = allTemplates[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor:
+                                    const Color(0xFFFF9500).withOpacity(0.1),
+                                child: Icon(
+                                  template.templateType == TemplateType.sheet
+                                      ? Icons.table_chart
+                                      : (template.isBuiltIn
+                                          ? Icons.auto_awesome
+                                          : Icons.description),
+                                  color: const Color(0xFFFF9500),
+                                ),
+                              ),
+                              title: Text(template.title),
+                              trailing:
+                                  const Icon(Icons.arrow_forward_ios, size: 16),
+                              onTap: () {
+                                Navigator.pop(context);
+                                // Create note with template content
+                                if (template.templateType ==
+                                    TemplateType.sheet) {
+                                  // Navigate to note editor with sheet data
+                                  context.push(
+                                    '/note/new',
+                                    extra: {
+                                      'category': template.category,
+                                      'isSheetTemplate': true,
+                                      'sheetData': template.sheetData,
+                                      'templateTitle': template.title,
+                                    },
+                                  );
+                                } else {
+                                  // Navigate to note editor with text template
+                                  context.push(
+                                    '/note/new?category=${template.category}&templateContent=${Uri.encodeComponent(template.content)}&templateTitle=${Uri.encodeComponent(template.title)}',
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
@@ -437,85 +557,90 @@ class _HomeScreenState extends State<HomeScreen> {
         const categories = [
           'Personal',
           'Work',
+          'Daily Use',
+          'Finance',
+          'Business',
           'Ideas',
           'Important',
         ];
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 16),
-              const Text(
-                'Filters',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                const Text(
+                  'Filters',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Category',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                const SizedBox(height: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Category',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final cat = categories[index];
-                  final selected = notesProvider.selectedCategory;
-                  final isSelected = selected != null &&
-                      selected.toLowerCase() == cat.toLowerCase();
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final selected = notesProvider.selectedCategory;
+                    final isSelected = selected != null &&
+                        selected.toLowerCase() == cat.toLowerCase();
 
-                  const Color selectedColor = Color(0xFFFF9500);
-                  return ListTile(
-                    leading: Icon(
-                      Icons.label_outline,
-                      color: isSelected ? selectedColor : Colors.black45,
-                    ),
-                    title: Text(
-                      cat,
-                      style: TextStyle(
-                        color: isSelected ? selectedColor : Colors.black87,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                    const Color selectedColor = Color(0xFFFF9500);
+                    return ListTile(
+                      leading: Icon(
+                        Icons.label_outline,
+                        color: isSelected ? selectedColor : Colors.black45,
                       ),
-                    ),
-                    selected: isSelected,
-                    selectedTileColor: selectedColor.withValues(alpha: 0.06),
-                    onTap: () {
-                      Navigator.pop(context);
-                      notesProvider.setSelectedCategory(cat);
-                      setState(() {});
-                    },
-                  );
-                },
-              ),
-              const Divider(height: 16),
-              ListTile(
-                leading: const Icon(Icons.clear_all, color: Colors.redAccent),
-                title: const Text(
-                  'Clear filters',
-                  style: TextStyle(color: Colors.redAccent),
+                      title: Text(
+                        cat,
+                        style: TextStyle(
+                          color: isSelected ? selectedColor : Colors.black87,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedTileColor: selectedColor.withValues(alpha: 0.06),
+                      onTap: () {
+                        Navigator.pop(context);
+                        notesProvider.setSelectedCategory(cat);
+                        setState(() {});
+                      },
+                    );
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  notesProvider.clearAllFilters();
-                  notesProvider.clearSearch();
-                  setState(() {});
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+                const Divider(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.clear_all, color: Colors.redAccent),
+                  title: const Text(
+                    'Clear filters',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    notesProvider.clearAllFilters();
+                    notesProvider.clearSearch();
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },

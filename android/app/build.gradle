@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
 }
 
 def localProperties = new Properties()
@@ -78,17 +79,16 @@ android {
         }
         debug {
             debuggable true
+            minifyEnabled false
+            shrinkResources false
         }
     }
 
-    defaultConfig {
-        applicationId "com.pebblenote.app"
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 35
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
-        // Removed ndk abiFilters to allow Flutter --split-per-abi to control ABIs
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }
+
 }
 
 flutter {

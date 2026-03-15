@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
+import '../models/sheet_template.dart';
 import '../utils/app_theme.dart';
 
 class NoteCard extends StatelessWidget {
@@ -25,6 +26,11 @@ class NoteCard extends StatelessWidget {
     return note.content.contains('☐') ||
         note.content.contains('☑') ||
         note.content == 'Checklist';
+  }
+
+  // Check if this note is a sheet template
+  bool get _isSheet {
+    return note.content.startsWith('__SHEET_DATA__:');
   }
 
   @override
@@ -84,6 +90,16 @@ class NoteCard extends StatelessWidget {
                             color: Colors.grey.shade600,
                           ),
                         ),
+                      // Sheet indicator
+                      if (_isSheet)
+                        Container(
+                          margin: const EdgeInsets.only(right: 2),
+                          child: Icon(
+                            Icons.table_chart,
+                            size: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
                     ],
                   ),
                   if (note.isPinned && !isArchived)
@@ -117,10 +133,43 @@ class NoteCard extends StatelessWidget {
                 ),
               ),
 
-              // Footer with category chip at bottom-right
+              // Footer with reminder indicator and category chip at bottom-right
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  // Reminder indicator
+                  if (note.reminderTime != null)
+                    Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: chipBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.alarm,
+                            size: 8,
+                            color: chipText,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            _formatReminderTime(note.reminderTime!),
+                            style: TextStyle(
+                              fontSize: 7,
+                              fontWeight: FontWeight.w500,
+                              color: chipText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Category chip
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
@@ -149,6 +198,73 @@ class NoteCard extends StatelessWidget {
   }
 
   Widget _buildContentPreview() {
+    // Check if this is a sheet template note
+    if (note.content.startsWith('__SHEET_DATA__:')) {
+      try {
+        final jsonString = note.content.substring('__SHEET_DATA__:'.length);
+        final sheetData = SheetData.fromJsonString(jsonString);
+        
+        // Show table preview with icon and summary
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.table_chart,
+                  size: 14,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    sheetData.columns.map((col) => col.name).join(' • '),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${sheetData.rows.length} ${sheetData.rows.length == 1 ? 'row' : 'rows'}${sheetData.hasTotal ? ' • Total: ${sheetData.currencySymbol ?? '₹'}${sheetData.calculateTotal().toStringAsFixed(2)}' : ''}',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+      } catch (e) {
+        // If parsing fails, show generic sheet indicator
+        return Row(
+          children: [
+            Icon(
+              Icons.table_chart,
+              size: 14,
+              color: Colors.grey.shade600,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Excel Sheet',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        );
+      }
+    }
+    
+    // Regular note content
     if (note.content.isEmpty || note.content == 'Checklist') {
       if (note.content == 'Checklist') {
         return Text(
@@ -176,5 +292,29 @@ class NoteCard extends StatelessWidget {
       maxLines: _isChecklist ? 3 : 3,
       overflow: TextOverflow.ellipsis,
     );
+  }
+
+  String _formatReminderTime(DateTime time) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final reminderDay = DateTime(time.year, time.month, time.day);
+    
+    if (reminderDay == today) {
+      final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+      final minute = time.minute.toString().padLeft(2, '0');
+      final period = time.hour >= 12 ? 'PM' : 'AM';
+      return '$hour:$minute $period';
+    } else if (reminderDay == today.add(const Duration(days: 1))) {
+      return 'Tomorrow';
+    } else if (reminderDay.isBefore(today)) {
+      return 'Past';
+    } else {
+      final diff = reminderDay.difference(today).inDays;
+      if (diff < 7) {
+        return '${diff}d';
+      } else {
+        return '${time.day}/${time.month}';
+      }
+    }
   }
 }

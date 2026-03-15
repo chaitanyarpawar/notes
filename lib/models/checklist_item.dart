@@ -3,12 +3,14 @@ class ChecklistItem {
   final String noteId;
   final String text;
   final bool isChecked;
+  final String? textDelta; // Rich text content as Quill Delta JSON
 
   ChecklistItem({
     this.id,
     required this.noteId,
     required this.text,
     required this.isChecked,
+    this.textDelta,
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +19,7 @@ class ChecklistItem {
       'noteId': noteId,
       'text': text,
       'isChecked': isChecked ? 1 : 0,
+      'textDelta': textDelta,
     };
   }
 
@@ -26,6 +29,7 @@ class ChecklistItem {
       noteId: map['noteId'] ?? '',
       text: map['text'] ?? '',
       isChecked: (map['isChecked'] ?? 0) == 1,
+      textDelta: map['textDelta'] as String?,
     );
   }
 
@@ -38,6 +42,7 @@ class ChecklistItem {
       noteId: json['noteId'],
       text: json['text'],
       isChecked: json['isChecked'] == 1,
+      textDelta: json['textDelta'] as String?,
     );
   }
 
@@ -46,12 +51,15 @@ class ChecklistItem {
     String? noteId,
     String? text,
     bool? isChecked,
+    String? textDelta,
+    bool clearTextDelta = false,
   }) {
     return ChecklistItem(
       id: id ?? this.id,
       noteId: noteId ?? this.noteId,
       text: text ?? this.text,
       isChecked: isChecked ?? this.isChecked,
+      textDelta: clearTextDelta ? null : (textDelta ?? this.textDelta),
     );
   }
 

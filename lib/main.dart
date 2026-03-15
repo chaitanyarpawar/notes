@@ -4,12 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:unity_ads_plugin/unity_ads_plugin.dart';
 
 import 'providers/notes_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/checklist_provider.dart';
+import 'providers/backup_provider.dart';
+import 'providers/templates_provider.dart';
 // import 'providers/speech_provider.dart';
 import 'services/hive_service.dart';
 import 'services/ad_service.dart';
@@ -44,28 +45,22 @@ void main() async {
 
   // Non-blocking: Initialize these in background
   AdMobService.initialize(); // Don't await - ads can load later
-  NotificationService
-      .initialize(); // Don't await - notifications can init later
 
-  // Initialize Google AdMob with test ads
-  debugPrint('🎉 Initializing AdMob for test ads...');
-  MobileAds.instance.initialize();
+  // CRITICAL: Must await notification service to ensure reminders work
+  try {
+    await NotificationService.initialize();
+    debugPrint('✅ NotificationService initialized successfully');
+  } catch (e) {
+    debugPrint('❌ NotificationService initialization failed: $e');
+  }
 
-  debugPrint('✅ AdMob initialized successfully');
-
-  // Initialize Unity Ads for production
-  debugPrint('🚀 Initializing Unity Ads...');
-  await UnityAds.init(
-    gameId:
-        AppConstants.unityGameIdAndroid, // Use Android Game ID from constants
-    testMode: false, // Set to false for production
-    onComplete: () {
-      debugPrint('✅ Unity Ads initialized successfully');
-    },
-    onFailed: (error, message) {
-      debugPrint('❌ Unity Ads initialization failed: $message');
-    },
-  );
+  // Initialize Google AdMob
+  try {
+    await MobileAds.instance.initialize();
+    debugPrint('✅ AdMob initialized successfully');
+  } catch (e) {
+    debugPrint('❌ AdMob initialization failed: $e');
+  }
 
   // Disable debug banner in debug mode
   if (kDebugMode) {
@@ -93,6 +88,13 @@ class PebbleNoteApp extends StatelessWidget {
           return notesProvider;
         }),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+        ChangeNotifierProvider(create: (_) => TemplatesProvider()),
+        // Google Drive Backup Provider
+        ChangeNotifierProvider(create: (_) {
+          final backupProvider = BackupProvider();
+          backupProvider.initialize(); // Initialize backup service
+          return backupProvider;
+        }),
         // Speech-to-text removed; no SpeechProvider
       ],
       child: Consumer<ThemeProvider>(
@@ -137,12 +139,28 @@ final GoRouter _router = GoRouter(
       name: 'note-new',
       builder: (context, state) {
         final isChecklist = state.uri.queryParameters['isChecklist'] == 'true';
+        final isTemplate = state.uri.queryParameters['isTemplate'] == 'true';
         final category = state.uri.queryParameters['category'] ?? 'Personal';
+        final templateContent = state.uri.queryParameters['templateContent'];
+        final templateTitle = state.uri.queryParameters['templateTitle'];
+
+        // Handle sheet template data from extra
+        final extra = state.extra as Map<String, dynamic>?;
+        final isSheetTemplate = extra?['isSheetTemplate'] as bool? ?? false;
+        final sheetData = extra?['sheetData'];
+        final sheetTemplateTitle = extra?['templateTitle'] as String?;
+        final sheetCategory = extra?['category'] as String?;
+
         debugPrint(
-            '🎯 Router: Building NoteEditor (NEW) category: $category url: ${state.uri}');
+            '🎯 Router: Building NoteEditor (NEW) category: ${sheetCategory ?? category} isSheet: $isSheetTemplate url: ${state.uri}');
         return NoteEditorScreen(
           isChecklist: isChecklist,
-          category: category,
+          isTemplate: isTemplate,
+          category: sheetCategory ?? category,
+          templateContent: templateContent,
+          templateTitle: sheetTemplateTitle ?? templateTitle,
+          isSheetTemplate: isSheetTemplate,
+          sheetData: sheetData,
         );
       },
     ),

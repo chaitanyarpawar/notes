@@ -13,6 +13,11 @@ class Note extends HiveObject {
   @HiveField(2)
   late String content;
 
+  // Rich text content stored as Quill Delta JSON
+  // When this is set, it takes precedence over plain 'content'
+  @HiveField(11)
+  String? contentDelta;
+
   @HiveField(3)
   late NoteColor color;
 
@@ -43,6 +48,7 @@ class Note extends HiveObject {
     required this.id,
     required this.title,
     required this.content,
+    this.contentDelta,
     this.color = NoteColor.yellow,
     this.isPinned = false,
     this.isArchived = false,
@@ -74,6 +80,8 @@ class Note extends HiveObject {
     String? id,
     String? title,
     String? content,
+    String? contentDelta,
+    bool clearContentDelta = false,
     NoteColor? color,
     bool? isPinned,
     bool? isArchived,
@@ -89,6 +97,8 @@ class Note extends HiveObject {
       id: id ?? this.id,
       title: title ?? this.title,
       content: content ?? this.content,
+      contentDelta:
+          clearContentDelta ? null : (contentDelta ?? this.contentDelta),
       color: color ?? this.color,
       isPinned: isPinned ?? this.isPinned,
       isArchived: isArchived ?? this.isArchived,
@@ -106,6 +116,7 @@ class Note extends HiveObject {
       'id': id,
       'title': title,
       'content': content,
+      'contentDelta': contentDelta,
       'color': color.index,
       'isPinned': isPinned,
       'isArchived': isArchived,
@@ -122,6 +133,7 @@ class Note extends HiveObject {
       id: json['id'],
       title: json['title'],
       content: json['content'],
+      contentDelta: json['contentDelta'] as String?,
       color: NoteColor.values[json['color']],
       isPinned: json['isPinned'],
       isArchived: json['isArchived'],

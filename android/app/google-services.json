@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "444340638415",
+    "project_id": "pebblenotes-a118e",
+    "storage_bucket": "pebblenotes-a118e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:444340638415:android:bcb4d181ee65b0847a5dba",
+        "android_client_info": {
+          "package_name": "com.pebblenote.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "444340638415-kkju1rrhop33os72i6jdi4224uamr8qd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pebblenote.app",
+            "certificate_hash": "5ca617ff06dfacd4435d578acd3f47d562d60153"
+          }
+        },
+        {
+          "client_id": "444340638415-maan7ijl6jisu37k8ghpn1pvjlfucapq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pebblenote.app",
+            "certificate_hash": "b0a88e6e91558fe3f026f3fbcfbe6e9947641445"
+          }
+        },
+        {
+          "client_id": "444340638415-r8eit58v5iebusq0gaqjjcp2g49brl1o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pebblenote.app",
+            "certificate_hash": "67902ee463590cd2f9280b369e97b5935e03f207"
+          }
+        },
+        {
+          "client_id": "444340638415-f3d6jds99no5dtg2614made18i4rpkqj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChHBOLgeRxwiGWX6PNAVdok5BUwn22kQI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "444340638415-f3d6jds99no5dtg2614made18i4rpkqj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/note.dart';
+import '../models/sheet_template.dart';
 import 'navigation_service.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -14,6 +16,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
   static String _localTimeZone = 'UTC';
+  static const _platformChannel = MethodChannel('com.pebblenote.app/settings');
 
   /// Callback to clear reminder from note when notification is delivered/tapped
   static Future<void> Function(String noteId)? onReminderDelivered;
@@ -97,7 +100,10 @@ class NotificationService {
       tz.setLocalLocation(tz.UTC);
     }
 
-    // Android 13+ requires runtime notification permission
+    // Android 13+ requires runtime notification permission only.
+    // Do NOT call requestExactAlarmsPermission() or requestIgnoreBatteryOptimizations()
+    // here — those launch system Activities and crash the app when called before
+    // the Flutter UI is rendered. They must be triggered from the Settings screen only.
     try {
       final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -106,18 +112,20 @@ class NotificationService {
         if (!enabled) {
           await androidPlugin.requestNotificationsPermission();
         }
-        // Request exact alarm permission on Android 12+
-        await androidPlugin.requestExactAlarmsPermission();
       }
     } catch (e) {
       debugPrint('⚠️ NotificationService: Permission request failed: $e');
     }
+
     // Create high-priority reminder channel
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'reminder_channel',
       'Reminders',
       description: 'Scheduled note/checklist reminders',
-      importance: Importance.high,
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
     );
     await _plugin
         .resolvePlatformSpecificImplementation<
@@ -157,23 +165,49 @@ class NotificationService {
     }
     await initialize();
     final when = note.reminderTime!;
-    if (!when.isAfter(DateTime.now())) {
+    final now = DateTime.now();
+    if (!when.isAfter(now)) {
       debugPrint(
-          '📅 NotificationService: Reminder time ${when.toIso8601String()} is in the past');
+          '⚠️ NotificationService: Reminder time ${when.toIso8601String()} is in the past (now: ${now.toIso8601String()})');
       return;
     }
 
+    final difference = when.difference(now);
     debugPrint(
-        '📅 NotificationService: Scheduling reminder for note ${note.id} at ${when.toIso8601String()}');
+        '📅 NotificationService: Scheduling reminder for note ${note.id}');
+    debugPrint('   ⏰ Current time: ${now.toIso8601String()}');
+    debugPrint('   ⏰ Reminder time: ${when.toIso8601String()}');
+    debugPrint(
+        '   ⏰ Time until reminder: ${difference.inMinutes} minutes ${difference.inSeconds % 60} seconds');
 
     // Build title/body
     final title = note.title.isNotEmpty ? note.title : 'Reminder';
     String body;
+
+    // Check if this is a sheet template
+    if (note.content.startsWith('__SHEET_DATA__:')) {
+      try {
+        final jsonString = note.content.substring('__SHEET_DATA__:'.length);
+        final sheetData = SheetData.fromJsonString(jsonString);
+        final rowCount = sheetData.rows.length;
+        final rowText = rowCount == 1 ? 'row' : 'rows';
+
+        if (sheetData.hasTotal) {
+          final total = sheetData.calculateTotal();
+          body =
+              '$rowCount $rowText • Total: ${sheetData.currencySymbol ?? '₹'}${total.toStringAsFixed(2)}';
+        } else {
+          body =
+              '$rowCount $rowText • ${sheetData.columns.map((c) => c.name).take(2).join(', ')}';
+        }
+      } catch (e) {
+        body = 'Excel Sheet';
+      }
+    }
     // Treat note with content 'Checklist' or containing checkbox markers as checklist
-    final isChecklist = note.content == 'Checklist' ||
+    else if (note.content == 'Checklist' ||
         note.content.contains('☐') ||
-        note.content.contains('☑');
-    if (isChecklist) {
+        note.content.contains('☑')) {
       try {
         final prefs = await SharedPreferences.getInstance();
         final key = 'checklist_${note.id}';
@@ -200,13 +234,14 @@ class NotificationService {
       'reminder_channel',
       'Reminders',
       channelDescription: 'Scheduled note/checklist reminders',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       category: AndroidNotificationCategory.reminder,
       icon: '@mipmap/ic_launcher',
       fullScreenIntent: true,
       playSound: true,
       enableVibration: true,
+      visibility: NotificationVisibility.public,
     );
 
     const NotificationDetails details =
@@ -221,6 +256,46 @@ class NotificationService {
     debugPrint(
         '📅 NotificationService: Scheduling notification ID $notifId for $tzWhen (timezone: $_localTimeZone)');
 
+    // Determine note type for payload
+    final isChecklist = note.content == 'Checklist' ||
+        note.content.contains('☐') ||
+        note.content.contains('☑');
+
+    // Determine if exact alarms are allowed
+    // If not, open system settings so user can grant it — do NOT silently fall
+    // back to inexact which causes 3-15 min delays.
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+    try {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final canScheduleExact =
+            await androidPlugin.canScheduleExactNotifications() ?? false;
+        debugPrint(
+            '🔔 NotificationService: Can schedule exact alarms: $canScheduleExact');
+        if (!canScheduleExact) {
+          // Open Settings so user can enable Alarms & Reminders
+          debugPrint(
+              '⚠️ NotificationService: Exact alarms not permitted — requesting permission');
+          await androidPlugin.requestExactAlarmsPermission();
+          // Re-check after request
+          final grantedAfter =
+              await androidPlugin.canScheduleExactNotifications() ?? false;
+          debugPrint(
+              '🔔 NotificationService: Permission granted after request: $grantedAfter');
+          if (!grantedAfter) {
+            // Still not granted: use inexact as last resort
+            scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+            debugPrint(
+                '⚠️ NotificationService: Using inexact mode as fallback - notifications may be delayed by 3-15 minutes!');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint(
+          '⚠️ NotificationService: Error checking exact alarm permission: $e');
+    }
+
     try {
       await _plugin.zonedSchedule(
         notifId,
@@ -228,7 +303,7 @@ class NotificationService {
         body,
         tzWhen,
         details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: null,
@@ -237,9 +312,35 @@ class NotificationService {
           'type': isChecklist ? 'checklist' : 'note',
         }),
       );
-      debugPrint('✅ NotificationService: Notification scheduled successfully');
-    } catch (e) {
-      debugPrint('❌ NotificationService: Failed to schedule notification: $e');
+      debugPrint(
+          '✅ NotificationService: Notification #$notifId scheduled successfully!');
+      debugPrint('   📱 Title: $title');
+      debugPrint('   📱 Mode: $scheduleMode');
+      debugPrint('   📱 Scheduled for: $tzWhen');
+
+      // Verify by checking pending notifications
+      try {
+        final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+        final pending = await androidPlugin?.pendingNotificationRequests();
+        if (pending != null) {
+          debugPrint('   📋 Total pending notifications: ${pending.length}');
+          final thisNotif = pending.where((n) => n.id == notifId);
+          if (thisNotif.isNotEmpty) {
+            debugPrint(
+                '   ✅ Confirmed: Notification #$notifId is in pending queue');
+          } else {
+            debugPrint(
+                '   ⚠️ Warning: Notification #$notifId NOT found in pending queue!');
+          }
+        }
+      } catch (e) {
+        debugPrint('   ⚠️ Could not verify pending notifications: $e');
+      }
+    } catch (e, st) {
+      debugPrint(
+          '❌ NotificationService: Failed to schedule notification #$notifId: $e');
+      debugPrint('❌ Stack trace: $st');
     }
   }
 
@@ -256,36 +357,118 @@ class NotificationService {
     await cancelReminderByNoteId(note.id);
   }
 
-  /// Schedules a quick test reminder 5 seconds from now to verify delivery.
+  /// Schedules a quick test reminder 10 seconds from now to verify delivery.
   static Future<void> scheduleTestReminder(
       {String title = 'Test Reminder'}) async {
     await initialize();
-    final when = DateTime.now().add(const Duration(seconds: 5));
+    final now = DateTime.now();
+    final when = now.add(const Duration(seconds: 10));
+    debugPrint('🧪 NotificationService: Scheduling TEST notification');
+    debugPrint('   ⏰ Current time: ${now.toIso8601String()}');
+    debugPrint('   ⏰ Will trigger at: ${when.toIso8601String()}');
+
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       'reminder_channel',
       'Reminders',
       channelDescription: 'Scheduled note/checklist reminders',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       category: AndroidNotificationCategory.reminder,
+      icon: '@mipmap/ic_launcher',
+      fullScreenIntent: true,
+      playSound: true,
+      enableVibration: true,
+      visibility: NotificationVisibility.public,
     );
     const NotificationDetails details =
         NotificationDetails(android: androidDetails);
     final tz.TZDateTime tzWhen = tz.TZDateTime.from(when, tz.local);
-    await _plugin.zonedSchedule(
-      // Use a fixed ID for test; it will overwrite prior tests
-      999999,
-      title,
-      'This is a test notification from PebbleNote',
-      tzWhen,
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: null,
-      payload: json.encode({'id': 'TEST', 'type': 'note'}),
-    );
+
+    // Determine schedule mode (same logic as scheduleReminder)
+    AndroidScheduleMode scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+    try {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final canExact =
+            await androidPlugin.canScheduleExactNotifications() ?? false;
+        debugPrint(
+            '🔔 NotificationService: Can schedule exact alarms: $canExact');
+        if (!canExact) {
+          scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+          debugPrint(
+              '⚠️ NotificationService: Using inexact mode for test (no exact alarm permission)');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: Could not check exact alarm: $e');
+    }
+
+    try {
+      await _plugin.zonedSchedule(
+        // Use a fixed ID for test; it will overwrite prior tests
+        999999,
+        title,
+        'Reminders are working! ✅ If you see this, notifications are working properly.',
+        tzWhen,
+        details,
+        androidScheduleMode: scheduleMode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: null,
+        payload: json.encode({'id': 'TEST', 'type': 'note'}),
+      );
+      debugPrint(
+          '✅ NotificationService: TEST notification scheduled (mode: $scheduleMode)');
+      debugPrint(
+          '   ⏰ Please wait 10+ seconds and check if notification appears...');
+    } catch (e, st) {
+      debugPrint(
+          '❌ NotificationService: Failed to schedule TEST notification: $e');
+      debugPrint('❌ Stack trace: $st');
+    }
+  }
+
+  /// Check if app is exempt from battery optimization
+  static Future<bool> isIgnoringBatteryOptimizations() async {
+    try {
+      return await _platformChannel
+              .invokeMethod<bool>('isIgnoringBatteryOptimizations') ??
+          true;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /// Request battery optimization exemption (opens system dialog)
+  static Future<void> requestIgnoreBatteryOptimizations() async {
+    try {
+      await _platformChannel.invokeMethod('requestIgnoreBatteryOptimizations');
+    } catch (e) {
+      debugPrint(
+          '⚠️ NotificationService: Could not request battery exemption: $e');
+    }
+  }
+
+  /// Open the exact alarm settings page (Android 12+)
+  static Future<void> openAlarmSettings() async {
+    try {
+      await _platformChannel.invokeMethod('openAlarmSettings');
+    } catch (e) {
+      debugPrint('⚠️ NotificationService: Could not open alarm settings: $e');
+    }
+  }
+
+  /// Check if exact alarms are permitted
+  static Future<bool> canScheduleExactAlarms() async {
+    try {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      return await androidPlugin?.canScheduleExactNotifications() ?? true;
+    } catch (e) {
+      return true;
+    }
   }
 
   /// Show an immediate notification (no scheduling) to validate delivery.

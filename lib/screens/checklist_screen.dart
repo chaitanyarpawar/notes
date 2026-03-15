@@ -15,11 +15,7 @@ class ChecklistScreen extends StatefulWidget {
   final String? noteId;
   final String category;
 
-  const ChecklistScreen({
-    super.key,
-    this.noteId,
-    this.category = 'Personal',
-  });
+  const ChecklistScreen({super.key, this.noteId, this.category = 'Personal'});
 
   @override
   State<ChecklistScreen> createState() => _ChecklistScreenState();
@@ -51,7 +47,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   void _initializeChecklist() async {
     _selectedCategory = widget.category; // Initialize with passed category
     debugPrint(
-        '📋 ChecklistScreen: Initializing checklist with category: ${widget.category}');
+      '📋 ChecklistScreen: Initializing checklist with category: ${widget.category}',
+    );
 
     if (widget.noteId != null) {
       final notesProvider = context.read<NotesProvider>();
@@ -72,7 +69,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           _createControllers(checklistProvider.items);
         }
         debugPrint(
-            '📋 ChecklistScreen: Loaded existing checklist with ${checklistProvider.items.length} items, category: ${_currentNote!.category}');
+          '📋 ChecklistScreen: Loaded existing checklist with ${checklistProvider.items.length} items, category: ${_currentNote!.category}',
+        );
       }
     } else {
       // For new checklists, clear any previous items and start fresh
@@ -86,7 +84,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       _itemControllers.clear();
 
       debugPrint(
-          '📋 ChecklistScreen: Initialized new checklist with category: ${widget.category}');
+        '📋 ChecklistScreen: Initialized new checklist with category: ${widget.category}',
+      );
     }
 
     _titleController.addListener(_onTextChanged);
@@ -143,7 +142,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
     if (_currentNote != null) {
       debugPrint(
-          '📋 ChecklistScreen: Adding new item to checklist ${_currentNote!.id}');
+        '📋 ChecklistScreen: Adding new item to checklist ${_currentNote!.id}',
+      );
       final newItem = await checklistProvider.addChecklistItem(
         _currentNote!.id,
         '',
@@ -177,7 +177,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           }
         });
         debugPrint(
-            '✅ ChecklistScreen: Added new item, total items: ${checklistProvider.items.length}');
+          '✅ ChecklistScreen: Added new item, total items: ${checklistProvider.items.length}',
+        );
         // Persist immediately so Home preview shows the new item
         await _saveChecklist();
       }
@@ -296,7 +297,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         await notesProvider.updateNote(updatedNote);
         _currentNote = updatedNote;
         debugPrint(
-            '✅ ChecklistScreen: Updated checklist note with ${updatedItems.length} items');
+          '✅ ChecklistScreen: Updated checklist note with ${updatedItems.length} items',
+        );
       } else if (!_isSaving) {
         // Create new note first
         setState(() {
@@ -304,7 +306,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         });
 
         debugPrint(
-            '📋 ChecklistScreen: About to create note with category: $_selectedCategory');
+          '📋 ChecklistScreen: About to create note with category: $_selectedCategory',
+        );
         final newNote = await notesProvider.createNote(
           title: title,
           content: contentPreview, // Show actual checklist items
@@ -316,7 +319,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         _currentNote = newNote;
         _isEditing = true;
         debugPrint(
-            '✅ ChecklistScreen: Created new checklist with ${updatedItems.length} items, final category: ${newNote.category}');
+          '✅ ChecklistScreen: Created new checklist with ${updatedItems.length} items, final category: ${newNote.category}',
+        );
 
         if (mounted) {
           final settingsProvider = context.read<SettingsProvider>();
@@ -394,8 +398,10 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 ),
                 if (_currentNote != null)
                   IconButton(
-                    icon:
-                        const Icon(Icons.delete_outline, color: Colors.black54),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.black54,
+                    ),
                     onPressed: _deleteChecklist,
                   ),
               ],
@@ -404,20 +410,20 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
               children: [
                 // Title
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                   child: TextField(
                     controller: _titleController,
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Checklist Title',
                       hintStyle: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         color: Colors.black54,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
@@ -425,40 +431,138 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   ),
                 ),
 
-                // Reminder row
+                // Reminder and Category row
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
                   child: Row(
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: _pickReminder,
-                        icon: const Icon(Icons.alarm),
-                        label: const Text('Set Reminder'),
+                      // Reminder chip (left)
+                      GestureDetector(
+                        onTap: _pickReminder,
+                        child: Container(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFFFF9500).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFFF9500)
+                                  .withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.alarm,
+                                color: Color(0xFFFF9500),
+                                size: 16,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Reminder',
+                                style: TextStyle(
+                                  color: Color(0xFFFF9500),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      if (_reminderTime != null)
-                        Flexible(
-                          child: Text(
-                            _formatReminder(_reminderTime!),
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.black54),
+
+                      const Spacer(),
+
+                      // Category chip (right)
+                      GestureDetector(
+                        onTap: _showCategoryPicker,
+                        child: Container(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFFFF9500).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFFF9500)
+                                  .withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.label,
+                                color: Color(0xFFFF9500),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _selectedCategory,
+                                style: const TextStyle(
+                                  color: Color(0xFFFF9500),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      if (_reminderTime != null) ...[
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          onPressed: _clearReminder,
-                          icon: const Icon(Icons.close, size: 16),
-                          label: const Text('Clear'),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
+
+                // Active reminder display (below buttons)
+                if (_reminderTime != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.alarm,
+                            size: 16,
+                            color: Colors.orange.shade700,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _formatReminder(_reminderTime!),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange.shade800,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _clearReminder,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.orange.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                 // Progress indicator
                 if (items.isNotEmpty && completedCount > 0)
@@ -492,7 +596,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                           value: completionPercentage,
                           backgroundColor: Colors.black.withValues(alpha: 0.1),
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF2196F3)),
+                            Color(0xFF2196F3),
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -502,13 +607,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 // Checklist items
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                     itemCount: items.length + 1,
                     itemBuilder: (context, index) {
                       if (index == items.length) {
                         // Add item button
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           child: GestureDetector(
                             onTap: _addNewItem,
                             child: const Row(
@@ -628,7 +733,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Color picker button
+                    // Color picker button with selected color indicator
                     GestureDetector(
                       onTap: _showColorPicker,
                       child: Container(
@@ -637,10 +742,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _getNoteColorValue(_selectedColor),
+                            width: 2.5,
+                          ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.palette_outlined,
-                          color: Colors.black54,
+                          color: _getNoteColorValue(_selectedColor),
                           size: 20,
                         ),
                       ),
@@ -673,20 +782,17 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       onTap: _isSaving
                           ? null
                           : () async {
-                              if (!_isSaving) {
-                                setState(() {
-                                  _isSaving = true;
-                                });
-                                final navigator = Navigator.of(context);
-                                await _saveChecklist();
-                                if (mounted) {
-                                  navigator.pop();
-                                }
+                              final navigator = Navigator.of(context);
+                              await _saveChecklist();
+                              if (mounted) {
+                                navigator.pop();
                               }
                             },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF2196F3),
                           borderRadius: BorderRadius.circular(25),
@@ -741,7 +847,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Checklist'),
         content: const Text(
-            'Are you sure you want to delete this checklist? This action cannot be undone.'),
+          'Are you sure you want to delete this checklist? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -763,9 +870,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       await notesProvider.deleteNote(_currentNote!.id);
       if (mounted) {
         context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Checklist deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Checklist deleted')));
       }
     }
   }
@@ -783,10 +890,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           children: [
             const Text(
               'Choose Color',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
             ColorSelector(
@@ -805,8 +909,200 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     );
   }
 
+  // Keyboard toolbar action handlers
+  void _showTextFormatOptions() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Text formatting not available for checklist items'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _insertCheckbox() {
+    // Simply add a new checklist item
+    _addNewItem();
+  }
+
+  void _showEmojiPicker() {
+    final emojis = ['😊', '😂', '❤️', '👍', '🎉', '⭐', '✨', '🔥', '💡', '✅'];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Insert Emoji',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: emojis.map((emoji) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Insert emoji in the currently focused item
+                    final focusedController = _itemControllers.firstWhere(
+                      (controller) => controller.selection.baseOffset != -1,
+                      orElse: () => _itemControllers.isNotEmpty
+                          ? _itemControllers.last
+                          : TextEditingController(),
+                    );
+                    if (focusedController.text.isNotEmpty ||
+                        _itemControllers.contains(focusedController)) {
+                      final currentText = focusedController.text;
+                      final selection = focusedController.selection;
+                      final newText =
+                          currentText.substring(0, selection.start) +
+                              emoji +
+                              currentText.substring(selection.start);
+                      focusedController.text = newText;
+                      focusedController.selection = TextSelection.collapsed(
+                        offset: selection.start + emoji.length,
+                      );
+                    }
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBackgroundImagePicker() {
+    final backgrounds = [
+      {'color': const Color(0xFFFFF9C4), 'label': 'Yellow'},
+      {'color': const Color(0xFFFFE0B2), 'label': 'Orange'},
+      {'color': const Color(0xFFC8E6C9), 'label': 'Green'},
+      {'color': const Color(0xFFFFCDD2), 'label': 'Pink'},
+      {'color': const Color(0xFFE1BEE7), 'label': 'Purple'},
+      {'color': const Color(0xFFB3E5FC), 'label': 'Blue'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Background Theme',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: backgrounds.length,
+              itemBuilder: (context, index) {
+                final bg = backgrounds[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Apply background (would need to add this to note model)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Background theme: ${bg['label']}')),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: bg['color'] as Color,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _insertAtCursor(String text) {
+    // Insert text in the currently focused item
+    final focusedController = _itemControllers.firstWhere(
+      (controller) => controller.selection.baseOffset != -1,
+      orElse: () => _itemControllers.isNotEmpty
+          ? _itemControllers.last
+          : TextEditingController(),
+    );
+    if (focusedController.text.isNotEmpty ||
+        _itemControllers.contains(focusedController)) {
+      final currentText = focusedController.text;
+      final selection = focusedController.selection;
+      final newText = currentText.substring(0, selection.start) +
+          text +
+          currentText.substring(selection.start);
+      focusedController.text = newText;
+      focusedController.selection = TextSelection.collapsed(
+        offset: selection.start + text.length,
+      );
+    }
+  }
+
+  // Helper method to get vibrant color for border/icon highlighting
+  Color _getNoteColorValue(NoteColor noteColor) {
+    switch (noteColor) {
+      case NoteColor.yellow:
+        return const Color(0xFFFBC02D);
+      case NoteColor.blue:
+        return const Color(0xFF2196F3);
+      case NoteColor.purple:
+        return const Color(0xFF9C27B0);
+      case NoteColor.pink:
+        return const Color(0xFFE91E63);
+      case NoteColor.green:
+        return const Color(0xFF4CAF50);
+      case NoteColor.orange:
+        return const Color(0xFFFF9500);
+    }
+  }
+
   void _showCategoryPicker() {
-    final categories = ['Personal', 'Work', 'Ideas', 'Important'];
+    final categories = [
+      'Personal',
+      'Work',
+      'Daily Use',
+      'Finance',
+      'Business',
+      'Ideas',
+      'Important'
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -820,25 +1116,37 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           children: [
             const Text(
               'Choose Category',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
-            ...categories.map((category) => ListTile(
-                  title: Text(category),
-                  leading: _selectedCategory == category
-                      ? const Icon(Icons.check, color: Color(0xFF2196F3))
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedCategory = category;
-                      _hasUnsavedChanges = true;
-                    });
-                    Navigator.pop(context);
-                  },
-                )),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.5,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: categories
+                      .map(
+                        (category) => ListTile(
+                          title: Text(category),
+                          leading: _selectedCategory == category
+                              ? const Icon(Icons.check,
+                                  color: Color(0xFF2196F3))
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = category;
+                              _hasUnsavedChanges = true;
+                            });
+                            Navigator.pop(context);
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -859,8 +1167,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       initialTime: TimeOfDay.now(),
     );
     if (time == null) return;
-    final dt =
-        DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final dt = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
     if (_savingReminder) return;
     setState(() {
       _savingReminder = true;
@@ -886,27 +1199,46 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   String _formatReminder(DateTime dt) {
     final d = dt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final reminderDay = DateTime(d.year, d.month, d.day);
+
     String two(int n) => n.toString().padLeft(2, '0');
     final hour = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final ampm = d.hour >= 12 ? 'PM' : 'AM';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final wd = weekdays[d.weekday - 1];
-    final mn = months[d.month - 1];
-    return '$wd, ${d.day} $mn ${d.year}  ${two(hour)}:${two(d.minute)} $ampm';
+    final time = '${two(hour)}:${two(d.minute)} $ampm';
+
+    if (reminderDay == today) {
+      return 'Today $time';
+    } else if (reminderDay == today.add(const Duration(days: 1))) {
+      return 'Tomorrow $time';
+    } else {
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final wd = weekdays[d.weekday - 1];
+      final mn = months[d.month - 1];
+      final diff = reminderDay.difference(today).inDays;
+
+      // Within a week - show day name
+      if (diff > 0 && diff < 7) {
+        return '$wd $time';
+      }
+      // Further out - show date
+      return '${d.day} $mn $time';
+    }
   }
 
   Future<void> _clearReminder() async {
