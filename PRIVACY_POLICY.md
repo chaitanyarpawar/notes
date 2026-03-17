@@ -1,6 +1,6 @@
 # Privacy Policy for PebbleNote
 
-**Last Updated: February 24, 2026**
+**Last Updated: March 17, 2026**
 
 ## Introduction
 
@@ -14,7 +14,7 @@ Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how w
 - **Exported Files**: When you export notes as PDF or images, files are created locally on your device. We do not access or store these exports.
 
 ### Information Collected Automatically
-- **Advertising Data**: We use Unity Ads to display advertisements. Unity Ads may collect device identifiers, IP address, and usage data for advertising purposes. Please refer to [Unity's Privacy Policy](https://unity.com/legal/privacy-policy) for more information.
+- **Advertising Data**: We use Google AdMob to display advertisements. Google AdMob may collect device identifiers, IP address, and usage data for advertising purposes. Please refer to [Google's Privacy Policy](https://policies.google.com/privacy) for more information.
 
 ### Optional Features
 - **Reminders**: Notification data for reminders is processed locally on your device.
@@ -27,7 +27,7 @@ Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how w
 
 - **Local Storage**: Your notes, sheet templates, and settings remain on your device and are never transmitted to our servers.
 - **Local Processing**: All features including sheet calculations, PDF generation, image creation, and calendar views are performed locally on your device.
-- **Advertisements**: We display ads through Unity Ads to support the free version of the app.
+- **Advertisements**: We display ads through Google AdMob to support the free version of the app.
 - **File Sharing**: When you export or share files (PDF/images), they are processed locally and shared through your device's native sharing system to apps you choose.
 
 ## Data Security
@@ -40,11 +40,11 @@ Welcome to PebbleNote ("we," "our," or "us"). This Privacy Policy explains how w
 
 Our App uses the following third-party services:
 
-### Unity Ads
+### Google AdMob
 - Purpose: Display advertisements
 - Data Collected: Device identifiers, IP address, usage data, advertising ID
-- Privacy Policy: [Unity Privacy Policy](https://unity.com/legal/privacy-policy)
-- Learn More: [Unity Ads Data Processing](https://unity.com/legal/game-player-and-app-user-privacy-policy)
+- Privacy Policy: [Google Privacy Policy](https://policies.google.com/privacy)
+- Learn More: [How Google uses data when you use our partners' sites or apps](https://policies.google.com/technologies/partner-sites)
 
 ## Children's Privacy
 
